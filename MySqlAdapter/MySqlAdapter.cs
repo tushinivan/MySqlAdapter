@@ -51,15 +51,59 @@ namespace Extensions.MySql
         {
             int result = -1;
 
-            result = _Execute(query, true, timeOut, (command) => 
+            result = _Execute(query, true, timeOut, (connection) => 
             {
-                return command.ExecuteNonQuery();
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
+                    command.CommandTimeout = timeOut;
+
+                    return command.ExecuteNonQuery();
+                }
+            });
+
+            return result;
+        }
+        public DataTable Select(string query, int timeOut)
+        {
+            DataTable result = null;
+
+            result = _Execute(query, true, timeOut, (connection) =>
+            {
+                using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
+                {
+                    adapter.SelectCommand.CommandTimeout = timeOut;
+
+                    result = new DataTable();
+                    adapter.Fill(result);
+
+                    return result;
+                }
+            });
+
+            return result;
+        }
+        public DataSet SelectDataSet(string query, int timeOut)
+        {
+            DataSet result = null;
+
+            result = _Execute(query, true, timeOut, (connection) =>
+            {
+                using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
+                {
+                    adapter.SelectCommand.CommandTimeout = timeOut;
+
+                    result = new DataSet();
+                    adapter.Fill(result);
+
+                    return result;
+                }
             });
 
             return result;
         }
 
-        private T _Execute<T>(string query, bool loopQuery, int timeOut, Func<MySqlCommand, T> func)
+        private T _Execute<T>(string query, bool loopQuery, int timeOut, Func<MySqlConnection, T> func)
         {
             Interlocked.Increment(ref runningQueries);
             int _timeOut = timeOut >= 0 ? timeOut : TimeOut;
@@ -73,24 +117,8 @@ namespace Extensions.MySql
                     using (MySqlConnection connection = new MySqlConnection(connectionString))
                     {
                         connection.Open();
-                        using (MySqlCommand command = new MySqlCommand(query, connection))
-                        {
-                            //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
-                            command.CommandTimeout = _timeOut;
-
-                            //Если есть параметры то используем их
-                            //if (parameters != null)
-                            //{
-                            //    foreach (var item in parameters)
-                            //    {
-                            //        command.Parameters.Add(item);
-                            //    }
-                            //}
-
-
-                            result = func(command);
-                            break;
-                        }
+                        result = func(connection);
+                        break;
                     }
                 }
                 catch (Exception ex)
