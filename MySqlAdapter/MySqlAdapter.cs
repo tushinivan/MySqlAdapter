@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Extensions.MySql
 {
-    class MySqlAdapter
+    public class MySqlAdapter
     {
         /// <summary>
         /// Выполнять запрос выдавший ошибку, через интервал LoopTimeOut.
@@ -51,12 +51,12 @@ namespace Extensions.MySql
         {
             int result = -1;
 
-            result = _Execute(query, true, timeOut, (connection) => 
+            result = _Execute(query, true, (connection) => 
             {
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
                     //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
-                    command.CommandTimeout = timeOut;
+                    command.CommandTimeout = timeOut >= 0 ? timeOut : TimeOut;
 
                     return command.ExecuteNonQuery();
                 }
@@ -68,11 +68,11 @@ namespace Extensions.MySql
         {
             DataTable result = null;
 
-            result = _Execute(query, true, timeOut, (connection) =>
+            result = _Execute(query, true, (connection) =>
             {
                 using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
                 {
-                    adapter.SelectCommand.CommandTimeout = timeOut;
+                    adapter.SelectCommand.CommandTimeout = timeOut >= 0 ? timeOut : TimeOut;
 
                     result = new DataTable();
                     adapter.Fill(result);
@@ -87,11 +87,11 @@ namespace Extensions.MySql
         {
             DataSet result = null;
 
-            result = _Execute(query, true, timeOut, (connection) =>
+            result = _Execute(query, true, (connection) =>
             {
                 using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
                 {
-                    adapter.SelectCommand.CommandTimeout = timeOut;
+                    adapter.SelectCommand.CommandTimeout = timeOut >= 0 ? timeOut : TimeOut;
 
                     result = new DataSet();
                     adapter.Fill(result);
@@ -102,11 +102,62 @@ namespace Extensions.MySql
 
             return result;
         }
+        public DataRow SelectRow(string query, int timeOut)
+        {
+            DataRow result = null;
 
-        private T _Execute<T>(string query, bool loopQuery, int timeOut, Func<MySqlConnection, T> func)
+            result = _Execute(query, true, (connection) =>
+            {
+                using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
+                {
+                    adapter.SelectCommand.CommandTimeout = timeOut >= 0 ? timeOut : TimeOut;
+
+                    var tmp = new DataTable();
+                    adapter.Fill(tmp);
+                    if (tmp.Rows.Count > 0)
+                    {
+                        return tmp.Rows[0];
+                    }
+
+                    return null;
+                }
+            });
+
+            return result;
+        }
+        public ScalarResult<T> Select<T>(string query, int timeOut)
+        {
+            ScalarResult<T> result = null;
+
+            result = _Execute(query, true, (connection) =>
+            {
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.CommandTimeout = timeOut >= 0 ? timeOut : TimeOut;
+
+                    object queryResult = command.ExecuteScalar();
+                    var tmp = new ScalarResult<T>() { Value = default(T) };
+
+                    if (!Convert.IsDBNull(queryResult) && queryResult != null)
+                    {
+                        var convertType = typeof(T);
+                        tmp.Value = (T)Convert.ChangeType(queryResult, convertType);
+                    }
+                    else
+                    {
+                        tmp.DbNull = true;
+                    }
+
+                    return tmp;
+                }
+            });
+
+            return result;
+        }
+
+        private T _Execute<T>(string query, bool loopQuery, Func<MySqlConnection, T> func)
         {
             Interlocked.Increment(ref runningQueries);
-            int _timeOut = timeOut >= 0 ? timeOut : TimeOut;
 
             T result = default(T);
             do
@@ -139,5 +190,11 @@ namespace Extensions.MySql
             Interlocked.Decrement(ref runningQueries);
             return result;
         }
+    }
+
+    public class ScalarResult<T>
+    {
+        public bool DbNull;
+        public T Value;
     }
 }
