@@ -172,10 +172,15 @@ namespace Extensions.MySql
                         break;
                     }
                 }
+                catch (MySqlException ex)
+                {
+                    
+                }
                 catch (Exception ex)
                 {
                     hasError = true;
                 }
+                
 
                 if (hasError && loopQuery)
                 {
