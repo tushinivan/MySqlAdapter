@@ -45,6 +45,7 @@ namespace Extensions.MySql
         public event ErrorArgs ErrorProcessed;
 
         private Dictionary<int, Action<Exception>> ExceptionHandlers = new Dictionary<int, Action<Exception>>();
+        private static Dictionary<string, CacheQuery> caches = new Dictionary<string, CacheQuery>();//кешированные запросы
 
         public MySqlAdapter(string connectionString)
         {
@@ -170,63 +171,88 @@ namespace Extensions.MySql
 
             return result;
         }
-
         private T _Execute<T>(string query, bool loopQuery, Func<MySqlConnection, T> queryFunc)
         {
             Interlocked.Increment(ref runningQueries);
 
             T result = default(T);
-            do
+            try
             {
-                try
+                do
                 {
-                    using (MySqlConnection connection = new MySqlConnection(connectionString))
+                    try
                     {
-                        connection.Open();
-                        result = queryFunc(connection);
-                        break;
-                    }
-                }
-                catch (MySqlException ex)
-                {
-                    //получаем обработчик ошибки
-                    if (ExceptionHandlers.TryGetValue(ex.Number, out Action<Exception> action))
-                    {
-                        action(ex);
-                        ErrorProcessed?.Invoke(ex, query);
-                    }
-                    else
-                    {
-                        //стандартные обработчики ошибок
-                        switch (ex.Number)
+                        using (MySqlConnection connection = new MySqlConnection(connectionString))
                         {
-                            case 1042://ER_BAD_HOST_ERROR
-                                ErrorProcessed?.Invoke(ex, query);
-                                break;
-                            case 1205://ER_LOCK_WAIT_TIMEOUT
-                                ErrorProcessed?.Invoke(ex, query);
-                                break;
-                            case 1213://ER_LOCK_DEADLOCK
-                                ErrorProcessed?.Invoke(ex, query);
-                                break;
-                            default:
-                                return result;
+                            connection.Open();
+                            result = queryFunc(connection);
+                            break;
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    return result;
-                }
-                
-                //Если разрешено зацикливание запроса
-                if (loopQuery)
-                {
-                    Thread.Sleep(LoopTimeOut);//делаем паузу в запросах
-                }
-            } while (loopQuery);
+                    catch (MySqlException ex)
+                    {
+                        //получаем обработчик ошибки
+                        if (ExceptionHandlers.TryGetValue(ex.Number, out Action<Exception> action))
+                        {
+                            action(ex);
+                            ErrorProcessed?.Invoke(ex, query);
+                        }
+                        else
+                        {
+                            //стандартные обработчики ошибок
+                            switch (ex.Number)
+                            {
+                                case 1042://ER_BAD_HOST_ERROR
+                                    ErrorProcessed?.Invoke(ex, query);
+                                    break;
+                                case 1205://ER_LOCK_WAIT_TIMEOUT
+                                    ErrorProcessed?.Invoke(ex, query);
+                                    break;
+                                case 1213://ER_LOCK_DEADLOCK
+                                    ErrorProcessed?.Invoke(ex, query);
+                                    break;
+                                default:
+                                    Error?.Invoke(ex, query);
+                                    return result;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Error?.Invoke(ex, query);
+                        break;
+                    }
 
-            Interlocked.Decrement(ref runningQueries);
+                    //Если разрешено зацикливание запроса
+                    if (loopQuery)
+                    {
+                        Thread.Sleep(LoopTimeOut);//делаем паузу в запросах
+                    }
+                } while (loopQuery);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref runningQueries);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Получает кеш запрсов по имени или создает новый.
+        /// </summary>
+        /// <param name="name">Название</param>
+        /// <returns></returns>
+        public CacheQuery GetCacheQuery(string name, string query, CacheOptions options)
+        {
+            CacheQuery result = null;
+            lock (caches)
+            {
+                if (!caches.TryGetValue(name, out result))
+                {
+                    result = new CacheQuery(this, query, options);
+                    caches.Add(name, result);
+                }
+            }
             return result;
         }
 
