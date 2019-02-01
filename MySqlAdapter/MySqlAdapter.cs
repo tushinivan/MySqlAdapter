@@ -140,7 +140,7 @@ namespace Extensions.MySql
 
             return result;
         }
-        public ScalarResult<T> Select<T>(string query, int timeOut = -1)
+        public ScalarResult<T> SelectScalar<T>(string query, int timeOut = -1)
         {
             ScalarResult<T> result = null;
             int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
