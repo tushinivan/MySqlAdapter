@@ -169,6 +169,35 @@ namespace Extensions.MySql
 
             return result;
         }
+        public int SelectReader(string query, Action<object[]> handler, int timeOut = -1)
+        {
+            int result = -1;
+            int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
+
+            result = _Execute(query, true, (connection) =>
+            {
+                int counter = 0;
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
+                    command.CommandTimeout = _timeOut;
+
+                    var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        object[] values = new object[reader.FieldCount];
+                        reader.GetValues(values);
+
+                        handler(values);
+                        counter++;
+                    }
+                }
+
+                return counter;
+            });
+
+            return result;
+        }
         private T _Execute<T>(string query, bool loopQuery, Func<MySqlConnection, T> queryFunc)
         {
             Interlocked.Increment(ref runningQueries);
