@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>ITsoft.Extensions.MySql</id>
+    <version>1.0.0</version>
+    <authors>tushin.iv</authors>
+    <owners>tushin.iv</owners>
+    <licenseUrl>https://github.com/tushinivan/MySqlAdapter/license.txt</licenseUrl>
+    <projectUrl>https://github.com/tushinivan/MySqlAdapter</projectUrl>
+    <iconUrl>https://github.com/tushinivan/MySqlAdapter/icon.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      This is MySqlAdapter - easy helper to work with MySql.
+
+      Capability:
+      1. Packing insert query
+      2. Cahcing query
+      3. Lopping qeury with error (e.t. deadlock table or transaction)
+      4. Character escaping
+    </description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags>mysql mysqladapter mysqlhelper</tags>
+    <dependencies>
+      <dependency id="SampleDependency" version="1.0" />
+    </dependencies>
+  </metadata>
+</package>

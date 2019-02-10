@@ -7,7 +7,7 @@
     <ProjectGuid>{3B6F0EE6-7D4E-4ADF-A549-F8EB0D9A5DBB}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Extensions.MySql</RootNamespace>
+    <RootNamespace>ITsoft.Extensions.MySql</RootNamespace>
     <AssemblyName>MySqlAdapter</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

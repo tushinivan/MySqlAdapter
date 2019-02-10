@@ -5,7 +5,7 @@ using System.Data;
 using System.Text;
 using System.Threading;
 
-namespace Extensions.MySql
+namespace ITsoft.Extensions.MySql
 {
     public class MySqlAdapter
     {

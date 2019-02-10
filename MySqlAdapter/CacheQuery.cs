@@ -3,7 +3,7 @@ using System;
 using System.Data;
 using System.Text;
 
-namespace Extensions.MySql
+namespace ITsoft.Extensions.MySql
 {
     /// <summary>
     /// Кеш запросов к БД.
