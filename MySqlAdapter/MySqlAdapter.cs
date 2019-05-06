@@ -169,7 +169,7 @@ namespace ITsoft.Extensions.MySql
 
             return result;
         }
-        public int SelectReader(string query, Action<object[]> handler, int timeOut = -1)
+        public int SelectReader(string query, Action<Dictionary<string, object>> handler, int timeOut = -1)
         {
             int result = -1;
             int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
@@ -185,10 +185,15 @@ namespace ITsoft.Extensions.MySql
                     var reader = command.ExecuteReader();
                     while (reader.Read())
                     {
-                        object[] values = new object[reader.FieldCount];
-                        reader.GetValues(values);
+                        Dictionary<string, object> row = new Dictionary<string, object>(reader.FieldCount);
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            string name = reader.GetName(i);
+                            row.Add(name, reader.GetValue(i));
+                        }
 
-                        handler(values);
+                        handler?.Invoke(row);
+
                         counter++;
                     }
                 }
