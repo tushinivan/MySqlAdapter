@@ -283,11 +283,9 @@ namespace ITsoft.Extensions.MySql
             return result;
         }
 
-        public static string CharacterEscaping(string str)
+        public static string EscapeString(string str)
         {
-            StringBuilder stringBuilder = new StringBuilder(str);
-            stringBuilder.Replace("'", "\'");
-            return stringBuilder.ToString();
+            return MySqlHelper.EscapeString(str);
         }
     }
 

@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // Общие сведения об этой сборке предоставляются следующим набором
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("MySqlAdapter")]
-[assembly: AssemblyDescription("MySqlAdapter - easy helper to work with MySql")]
+[assembly: AssemblyTitle("MySqlAdapter.Examples")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("ITsoft")]
-[assembly: AssemblyProduct("MySqlAdapter")]
-[assembly: AssemblyCopyright("Copyright ITsoft ©  2019")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("MySqlAdapter.Examples")]
+[assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("3b6f0ee6-7d4e-4adf-a549-f8eb0d9a5dbb")]
+[assembly: Guid("53722533-f8e9-494c-b269-44ac3fecb144")]
 
 // Сведения о версии сборки состоят из следующих четырех значений:
 //
@@ -32,8 +32,5 @@ using System.Runtime.InteropServices;
 // Можно задать все значения или принять номер сборки и номер редакции по умолчанию.
 // используя "*", как показано ниже:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.2")]
-[assembly: AssemblyFileVersion("1.0.0.2")]
-[assembly: InternalsVisibleTo("MySqlAdapter.Tests")]
-[assembly: InternalsVisibleTo("MySqlAdapter.Explorables")]
-
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

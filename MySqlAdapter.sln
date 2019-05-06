@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySqlAdapter", "MySqlAdapte
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySqlAdapter.Tests", "MySqlAdapter.Tests\MySqlAdapter.Tests.csproj", "{558167EB-569F-4562-96F2-8E0F17F88FFA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySqlAdapter.Examples", "MySqlAdapter.Examples\MySqlAdapter.Examples.csproj", "{53722533-F8E9-494C-B269-44AC3FECB144}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{558167EB-569F-4562-96F2-8E0F17F88FFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{558167EB-569F-4562-96F2-8E0F17F88FFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{558167EB-569F-4562-96F2-8E0F17F88FFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53722533-F8E9-494C-B269-44AC3FECB144}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53722533-F8E9-494C-B269-44AC3FECB144}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53722533-F8E9-494C-B269-44AC3FECB144}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53722533-F8E9-494C-B269-44AC3FECB144}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
