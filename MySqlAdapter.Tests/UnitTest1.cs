@@ -29,15 +29,18 @@ namespace ITsoft.Extensions.MySql.Tests
                 CacheSize = 1000,
                 SlidingExpiration = new TimeSpan(0, 1, 0)
             };
-            var myDictionaryQuery = adapter.GetCacheQuery("my_dictionary", "SELECT id FROM test.my_dictionary WHERE code = {0}", options);
+            var myDictionaryQuery = adapter.GetCacheQuery("my_dictionary", "SELECT id FROM test.my_dictionary WHERE code = '{0}'", options);
 
-            while (true)
+            string code = "code_1";
+            var table = myDictionaryQuery.Get(false, code);
+            if (table.Rows.Count == 0)
             {
-                string code = "code_1";
-                var table = myDictionaryQuery.Get(false, code);
-
-                var value = myDictionaryQuery.GetScalar<int>(false, code);
+                adapter.Execute($"INSERT INTO test.my_dictionary SET id = 1, code = '{code}'");
             }
+
+            var value = myDictionaryQuery.GetScalar<int>(false, code);
+            Assert.IsNotNull(value);
+            Assert.AreEqual(value.Value, 1);
         }
     }
 }
