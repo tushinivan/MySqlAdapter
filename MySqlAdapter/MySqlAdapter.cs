@@ -283,6 +283,16 @@ namespace ITsoft.Extensions.MySql
             return result;
         }
 
+        public DateTime GetServerDateTime()
+        {
+            var result = SelectScalar<DateTime>("SELECT NOW();");
+            if (result != null && !result.DbNull)
+            {
+                return result.Value;
+            }
+
+            throw new Exception("Execute error");
+        }
         public static string EscapeString(string str)
         {
             return MySqlHelper.EscapeString(str);
