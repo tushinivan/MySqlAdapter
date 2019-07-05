@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace ITsoft.Extensions.MySql
@@ -45,6 +47,10 @@ namespace ITsoft.Extensions.MySql
         private Dictionary<int, Action<Exception>> ExceptionHandlers = new Dictionary<int, Action<Exception>>();
         private static Dictionary<string, CacheQuery> caches = new Dictionary<string, CacheQuery>();//кешированные запросы
 
+        /// <summary>
+        /// Connection String.
+        /// </summary>
+        /// <param name="connectionString"></param>
         public MySqlAdapter(string connectionString)
         {
             if (connectionString != null)
@@ -54,6 +60,53 @@ namespace ITsoft.Extensions.MySql
             else
             {
                 throw new Exception("Не задана строка подключения.");
+            }
+        }
+
+        /// <summary>
+        /// Create connection from source file.
+        /// </summary>
+        /// <param name="connectionName">Connection name.</param>
+        /// <param name="connectionFile">Source file.</param>
+        public MySqlAdapter(string connectionName, string connectionFile)
+        {
+            if (connectionName == null || connectionName.Length == 0)
+            {
+                throw new NullReferenceException("Connection name must not null or empty.");
+            }
+
+            if (connectionFile == null || connectionFile.Length == 0)
+            {
+                throw new NullReferenceException("Connection file must not null or empty.");
+            }
+
+            Regex regexStrings = new Regex("(?<name>\".+?\"):(?<connectionString>\".+?\")", RegexOptions.IgnoreCase);
+
+            var lines = File.ReadAllLines(connectionFile, Encoding.UTF8);
+            foreach (var line in lines)
+            {
+                var match = regexStrings.Match(line);
+                if (match.Success)
+                {
+                    if (connectionName != null)
+                    {
+                        if (match.Groups["name"].Value.Trim('"') == connectionName)
+                        {
+                            connectionString = match.Groups["connectionString"].Value.Trim('"');
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        connectionString = match.Groups["connectionString"].Value.Trim('"');
+                        break;
+                    }
+                }
+            }
+
+            if (connectionString == null)
+            {
+                throw new Exception($"Can not found connection name \"{connectionName}\" in file \"{connectionFile}\"");
             }
         }
 
