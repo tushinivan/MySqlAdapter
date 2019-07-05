@@ -141,7 +141,7 @@ namespace ITsoft.Extensions.MySql
             int result = -1;
             int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, true, (connection) => 
+            result = _Execute(query, LoopQuery, (connection) => 
             {
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
@@ -159,7 +159,7 @@ namespace ITsoft.Extensions.MySql
             DataTable result = null;
             int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, true, (connection) =>
+            result = _Execute(query, LoopQuery, (connection) =>
             {
                 using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
                 {
@@ -179,7 +179,7 @@ namespace ITsoft.Extensions.MySql
             DataSet result = null;
             int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, true, (connection) =>
+            result = _Execute(query, LoopQuery, (connection) =>
             {
                 using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
                 {
@@ -199,7 +199,7 @@ namespace ITsoft.Extensions.MySql
             DataRow result = null;
             int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, true, (connection) =>
+            result = _Execute(query, LoopQuery, (connection) =>
             {
                 using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
                 {
@@ -223,7 +223,7 @@ namespace ITsoft.Extensions.MySql
             ScalarResult<T> result = null;
             int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, true, (connection) =>
+            result = _Execute(query, LoopQuery, (connection) =>
             {
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
@@ -253,7 +253,7 @@ namespace ITsoft.Extensions.MySql
             int result = -1;
             int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, true, (connection) =>
+            result = _Execute(query, LoopQuery, (connection) =>
             {
                 int counter = 0;
                 using (MySqlCommand command = new MySqlCommand(query, connection))
@@ -282,6 +282,7 @@ namespace ITsoft.Extensions.MySql
 
             return result;
         }
+
         private T _Execute<T>(string query, bool loopQuery, Func<MySqlConnection, T> queryFunc)
         {
             Interlocked.Increment(ref runningQueries);
@@ -297,6 +298,7 @@ namespace ITsoft.Extensions.MySql
                         {
                             connection.Open();
                             result = queryFunc(connection);
+                            connection.Close();
                             break;
                         }
                     }
