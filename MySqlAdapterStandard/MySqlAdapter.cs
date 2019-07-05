@@ -22,19 +22,19 @@ namespace ITsoft.Extensions.MySql
         public int LoopTimeOut { get; set; } = 10000;
 
         /// <summary>
-        /// Время ожидания выполнения запроса. По умолчанию 300 сек.
+        /// Время ожидания выполнения запроса. По умолчанию 30 сек.
         /// </summary>
-        public int DefaultTimeOut { get; set; } = 300;
+        public int DefaultTimeOut { get; set; } = 30;
 
         /// <summary>
-        /// Максимальное время выполнения запроса. По умолчанию 3600 сек.
+        /// Максимальное время выполнения запроса. По умолчанию 30 сек.
         /// </summary>
-        public int MaximumTimeOut { get; set; } = 3600;
+        public int MaximumTimeOut { get; set; } = 30;
 
         private int runningQueries;
         private readonly string connectionString;
 
-        public delegate void ErrorArgs(Exception ex, string query);
+        public delegate void ErrorArgs(Exception ex, QueryContext queryContext);
         /// <summary>
         /// Событие происходящее при возникновении ошибки при выполнении запроса.
         /// </summary>
@@ -44,7 +44,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         public event ErrorArgs ErrorProcessed;
 
-        private Dictionary<int, Action<Exception>> ExceptionHandlers = new Dictionary<int, Action<Exception>>();
+        private Dictionary<int, Action<Exception, QueryContext>> ExceptionHandlers = new Dictionary<int, Action<Exception, QueryContext>>();
         private static Dictionary<string, CacheQuery> caches = new Dictionary<string, CacheQuery>();//кешированные запросы
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace ITsoft.Extensions.MySql
                     {
                         if (match.Groups["name"].Value.Trim('"') == connectionName)
                         {
-                            var connectionString = match.Groups["connectionString"].Value.Trim('"');
+                            connectionString = match.Groups["connectionString"].Value.Trim('"');
                             break;
                         }
                     }
@@ -126,27 +126,31 @@ namespace ITsoft.Extensions.MySql
             //ER_LOCK_DEADLOCK
             ExceptionHandlers.Add(1213, null);
 
-            //ER_LOCK_DEADLOCK
-            //ExceptionHandlers.Add(0, (ex) =>
-            //{
-            //    if (MaximumTimeOut)
-            //    {
-                    
-            //    }
-            //});
+            //ER_TIMEOUT
+            ExceptionHandlers.Add(0, (ex, context) =>
+            {
+                if (context.CommandTimeOut < MaximumTimeOut)
+                {
+                    context.CommandTimeOut = MaximumTimeOut;
+                }
+                else
+                {
+                    context.LoopQuery = false;
+                    throw ex;
+                }
+            });
         }
 
         public int Execute(string query, int timeOut = -1)
         {
             int result = -1;
-            int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, LoopQuery, (connection) => 
+            result = _Execute(new QueryContext() { Query = query, LoopQuery = LoopQuery, CommandTimeOut = timeOut }, (connection, commandTimeOut) => 
             {
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
                     //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
-                    command.CommandTimeout = _timeOut;
+                    command.CommandTimeout = commandTimeOut >= 0 ? commandTimeOut : DefaultTimeOut; ;
 
                     return command.ExecuteNonQuery();
                 }
@@ -157,13 +161,13 @@ namespace ITsoft.Extensions.MySql
         public DataTable Select(string query, int timeOut = -1)
         {
             DataTable result = null;
-            int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, LoopQuery, (connection) =>
+            result = _Execute(new QueryContext() { Query = query, LoopQuery = LoopQuery, CommandTimeOut = timeOut }, (connection, commandTimeOut) =>
             {
                 using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
                 {
-                    adapter.SelectCommand.CommandTimeout = _timeOut;
+                    //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
+                    adapter.SelectCommand.CommandTimeout = commandTimeOut >= 0 ? commandTimeOut : DefaultTimeOut; ;
 
                     result = new DataTable();
                     adapter.Fill(result);
@@ -177,13 +181,13 @@ namespace ITsoft.Extensions.MySql
         public DataSet SelectDataSet(string query, int timeOut = -1)
         {
             DataSet result = null;
-            int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, LoopQuery, (connection) =>
+            result = _Execute(new QueryContext() { Query = query, LoopQuery = LoopQuery, CommandTimeOut = timeOut }, (connection, commandTimeOut) =>
             {
                 using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
                 {
-                    adapter.SelectCommand.CommandTimeout = _timeOut;
+                    //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
+                    adapter.SelectCommand.CommandTimeout = commandTimeOut >= 0 ? commandTimeOut : DefaultTimeOut; ;
 
                     result = new DataSet();
                     adapter.Fill(result);
@@ -197,13 +201,13 @@ namespace ITsoft.Extensions.MySql
         public DataRow SelectRow(string query, int timeOut = -1)
         {
             DataRow result = null;
-            int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, LoopQuery, (connection) =>
+            result = _Execute(new QueryContext() { Query = query, LoopQuery = LoopQuery, CommandTimeOut = timeOut }, (connection, commandTimeOut) =>
             {
                 using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, connection))
                 {
-                    adapter.SelectCommand.CommandTimeout = _timeOut;
+                    //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
+                    adapter.SelectCommand.CommandTimeout = commandTimeOut >= 0 ? commandTimeOut : DefaultTimeOut; ;
 
                     var tmp = new DataTable();
                     adapter.Fill(tmp);
@@ -221,13 +225,13 @@ namespace ITsoft.Extensions.MySql
         public ScalarResult<T> SelectScalar<T>(string query, int timeOut = -1)
         {
             ScalarResult<T> result = null;
-            int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, LoopQuery, (connection) =>
+            result = _Execute(new QueryContext() { Query = query, LoopQuery = LoopQuery, CommandTimeOut = timeOut }, (connection, commandTimeOut) =>
             {
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
-                    command.CommandTimeout = _timeOut;
+                    //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
+                    command.CommandTimeout = commandTimeOut >= 0 ? commandTimeOut : DefaultTimeOut; ;
 
                     object queryResult = command.ExecuteScalar();
                     var tmp = new ScalarResult<T>() { Value = default(T) };
@@ -251,15 +255,14 @@ namespace ITsoft.Extensions.MySql
         public int SelectReader(string query, Action<Dictionary<string, object>> handler, int timeOut = -1)
         {
             int result = -1;
-            int _timeOut = timeOut >= 0 ? timeOut : DefaultTimeOut;
 
-            result = _Execute(query, LoopQuery, (connection) =>
+            result = _Execute(new QueryContext() { Query = query, LoopQuery = LoopQuery, CommandTimeOut = timeOut }, (connection, commandTimeOut) =>
             {
                 int counter = 0;
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
                     //Если значение таймаута больше или равно нулю - то это значение берем из текущего вызова функции
-                    command.CommandTimeout = _timeOut;
+                    command.CommandTimeout = commandTimeOut >= 0 ? commandTimeOut : DefaultTimeOut; ;
 
                     var reader = command.ExecuteReader();
                     while (reader.Read())
@@ -283,7 +286,7 @@ namespace ITsoft.Extensions.MySql
             return result;
         }
 
-        private T _Execute<T>(string query, bool loopQuery, Func<MySqlConnection, T> queryFunc)
+        private T _Execute<T>(QueryContext queryContext, Func<MySqlConnection, int, T> queryFunc)
         {
             Interlocked.Increment(ref runningQueries);
 
@@ -297,7 +300,7 @@ namespace ITsoft.Extensions.MySql
                         using (MySqlConnection connection = new MySqlConnection(connectionString))
                         {
                             connection.Open();
-                            result = queryFunc(connection);
+                            result = queryFunc(connection, queryContext.CommandTimeOut);
                             connection.Close();
                             break;
                         }
@@ -305,29 +308,33 @@ namespace ITsoft.Extensions.MySql
                     catch (MySqlException ex)
                     {
                         //получаем обработчик ошибки
-                        if (ExceptionHandlers.TryGetValue(ex.Number, out Action<Exception> action))
+                        if (ExceptionHandlers.TryGetValue(ex.Number, out Action<Exception, QueryContext> action))
                         {
-                            action?.Invoke(ex);
-                            ErrorProcessed?.Invoke(ex, query);
+                            action?.Invoke(ex, queryContext);
+                            ErrorProcessed?.Invoke(ex, queryContext);
                         }
                         else
                         {
-                            Error?.Invoke(ex, query);
+                            Error?.Invoke(ex, queryContext);
                             return result;
                         }
                     }
                     catch (Exception ex)
                     {
-                        Error?.Invoke(ex, query);
+                        Error?.Invoke(ex, queryContext);
                         break;
                     }
 
                     //Если разрешено зацикливание запроса
-                    if (loopQuery)
+                    if (queryContext.LoopQuery)
                     {
                         Thread.Sleep(LoopTimeOut);//делаем паузу в запросах
                     }
-                } while (loopQuery);
+                } while (queryContext.LoopQuery);
+            }
+            catch (Exception ex)
+            {
+                Error?.Invoke(ex, queryContext);
             }
             finally
             {
@@ -375,5 +382,11 @@ namespace ITsoft.Extensions.MySql
     {
         public bool DbNull;
         public T Value;
+    }
+    public class QueryContext
+    {
+        public string Query { get; set; }
+        public int CommandTimeOut { get; set; }
+        public bool LoopQuery { get; set; }
     }
 }
