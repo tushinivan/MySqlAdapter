@@ -14,22 +14,22 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Выполнять запрос выдавший ошибку, через интервал LoopTimeOut.
         /// </summary>
-        public bool LoopQuery = true;
+        public bool LoopQuery { get; set; } = true;
 
         /// <summary>
         /// Время между повторами запросов в мс. По умолчанию 10000 мс. (10 сек)
         /// </summary>
-        public int LoopTimeOut = 10000;
+        public int LoopTimeOut { get; set; } = 10000;
 
         /// <summary>
         /// Время ожидания выполнения запроса. По умолчанию 300 сек.
         /// </summary>
-        public int DefaultTimeOut = 300;
+        public int DefaultTimeOut { get; set; } = 300;
 
         /// <summary>
         /// Максимальное время выполнения запроса. По умолчанию 3600 сек.
         /// </summary>
-        public int MaximumTimeOut = 3600;
+        public int MaximumTimeOut { get; set; } = 3600;
 
         private int runningQueries;
         private readonly string connectionString;
@@ -56,6 +56,7 @@ namespace ITsoft.Extensions.MySql
             if (connectionString != null)
             {
                 this.connectionString = connectionString;
+                AddDefaultHandlers();
             }
             else
             {
@@ -92,7 +93,7 @@ namespace ITsoft.Extensions.MySql
                     {
                         if (match.Groups["name"].Value.Trim('"') == connectionName)
                         {
-                            connectionString = match.Groups["connectionString"].Value.Trim('"');
+                            var connectionString = match.Groups["connectionString"].Value.Trim('"');
                             break;
                         }
                     }
@@ -108,6 +109,31 @@ namespace ITsoft.Extensions.MySql
             {
                 throw new Exception($"Can not found connection name \"{connectionName}\" in file \"{connectionFile}\"");
             }
+            else
+            {
+                AddDefaultHandlers();
+            }
+        }
+
+        private void AddDefaultHandlers()
+        {
+            //ER_BAD_HOST_ERROR
+            ExceptionHandlers.Add(1042, null);
+
+            //ER_LOCK_WAIT_TIMEOUT
+            ExceptionHandlers.Add(1205, null);
+
+            //ER_LOCK_DEADLOCK
+            ExceptionHandlers.Add(1213, null);
+
+            //ER_LOCK_DEADLOCK
+            //ExceptionHandlers.Add(0, (ex) =>
+            //{
+            //    if (MaximumTimeOut)
+            //    {
+                    
+            //    }
+            //});
         }
 
         public int Execute(string query, int timeOut = -1)
@@ -279,27 +305,13 @@ namespace ITsoft.Extensions.MySql
                         //получаем обработчик ошибки
                         if (ExceptionHandlers.TryGetValue(ex.Number, out Action<Exception> action))
                         {
-                            action(ex);
+                            action?.Invoke(ex);
                             ErrorProcessed?.Invoke(ex, query);
                         }
                         else
                         {
-                            //стандартные обработчики ошибок
-                            switch (ex.Number)
-                            {
-                                case 1042://ER_BAD_HOST_ERROR
-                                    ErrorProcessed?.Invoke(ex, query);
-                                    break;
-                                case 1205://ER_LOCK_WAIT_TIMEOUT
-                                    ErrorProcessed?.Invoke(ex, query);
-                                    break;
-                                case 1213://ER_LOCK_DEADLOCK
-                                    ErrorProcessed?.Invoke(ex, query);
-                                    break;
-                                default:
-                                    Error?.Invoke(ex, query);
-                                    return result;
-                            }
+                            Error?.Invoke(ex, query);
+                            return result;
                         }
                     }
                     catch (Exception ex)
