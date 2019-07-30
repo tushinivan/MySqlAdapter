@@ -16,7 +16,7 @@ namespace ITsoft.Extensions.MySql.Tests
             adapter.Error += Adapter_Error;
         }
 
-        private void Adapter_Error(Exception ex, string query)
+        private void Adapter_Error(Exception ex, QueryContext queryContext)
         {
             
         }
