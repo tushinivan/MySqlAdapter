@@ -9,6 +9,30 @@ namespace ITsoft.Extensions.MySql
     /// </summary>
     public class InsertBuffer
     {
+        /// <summary>
+        /// Количество запросов в очереди.
+        /// </summary>
+        public int QueueCount { get => counter; }
+        public string Query
+        {
+            get
+            {
+                StringBuilder result = null;
+
+                if (counter > 0)
+                {
+                    lock (queryBuilder)
+                    {
+                        result = new StringBuilder(queryBuilder.ToString());
+                    }
+                    result.Remove(queryBuilder.Length - 1, 1);
+                    result.Append(';');
+                }
+
+                return result?.ToString();
+            }
+        }
+
         public delegate void InsertedArgs(int RowsCount);
         public event InsertedArgs Inserted;
 
@@ -53,15 +77,19 @@ namespace ITsoft.Extensions.MySql
         /// <param name="values">Значения, через запятую.</param>
         public int Add(string values)
         {
-            Interlocked.Increment(ref counter);
-            queryBuilder.Append("(" + values + "),");
-
-            int result = 0;
-            if (counter >= packegeSize)
+            lock (queryBuilder)
             {
-                result = Insert();
+                Interlocked.Increment(ref counter);
+                queryBuilder.Append("(" + values + "),");
+
+                int result = 0;
+                if (counter >= packegeSize)
+                {
+                    result = Insert();
+                }
+
+                return result;
             }
-            return result;
         }
 
         /// <summary>
@@ -70,23 +98,26 @@ namespace ITsoft.Extensions.MySql
         /// <param name="values">Значения, через запятую.</param>
         public int Add(params string[] values)
         {
-            queryBuilder.Append('(');
-            foreach (object item in values)
+            lock (queryBuilder)
             {
-                queryBuilder.Append('\'');
-                queryBuilder.Append(item.ToString());
-                queryBuilder.Append("',");
-            }
-            queryBuilder.Remove(queryBuilder.Length - 1, 1);
-            queryBuilder.Append("),");
+                queryBuilder.Append('(');
+                foreach (object item in values)
+                {
+                    queryBuilder.Append('\'');
+                    queryBuilder.Append(item.ToString());
+                    queryBuilder.Append("',");
+                }
+                queryBuilder.Remove(queryBuilder.Length - 1, 1);
+                queryBuilder.Append("),");
 
-            Interlocked.Increment(ref counter);
-            int result = 0;
-            if (counter >= packegeSize)
-            {
-                result = Insert();
+                Interlocked.Increment(ref counter);
+                int result = 0;
+                if (counter >= packegeSize)
+                {
+                    result = Insert();
+                }
+                return result;
             }
-            return result;
         }
 
         /// <summary>
@@ -95,41 +126,44 @@ namespace ITsoft.Extensions.MySql
         /// <param name="values">Значение полей. Апострофы из строк удаляются автоматически.</param>
         public int Add(params object[] values)
         {
-            queryBuilder.Append('(');
-            foreach (object item in values)
+            lock (queryBuilder)
             {
-                Type t = item.GetType();
-
-                queryBuilder.Append('\'');
-                switch (t.Name)
+                queryBuilder.Append('(');
+                foreach (object item in values)
                 {
-                    case "String":
-                        queryBuilder.Append(item.ToString());
-                        break;
-                    case "Double":
-                    case "Single":
-                        queryBuilder.Append(item.ToString().Replace(',', '.'));
-                        break;
-                    case "DateTime":
-                        queryBuilder.Append(((DateTime)item).ToString("s"));
-                        break;
-                    default:
-                        queryBuilder.Append(item.ToString());
-                        break;
-                }
-                queryBuilder.Append("',");
-            }
-            queryBuilder.Remove(queryBuilder.Length - 1, 1);
-            queryBuilder.Append(')');
-            queryBuilder.Append(',');
+                    Type t = item.GetType();
 
-            Interlocked.Increment(ref counter);
-            int result = -1;
-            if (counter >= packegeSize)
-            {
-                result = Insert();
+                    queryBuilder.Append('\'');
+                    switch (t.Name)
+                    {
+                        case "String":
+                            queryBuilder.Append(item.ToString());
+                            break;
+                        case "Double":
+                        case "Single":
+                            queryBuilder.Append(item.ToString().Replace(',', '.'));
+                            break;
+                        case "DateTime":
+                            queryBuilder.Append(((DateTime)item).ToString("s"));
+                            break;
+                        default:
+                            queryBuilder.Append(item.ToString());
+                            break;
+                    }
+                    queryBuilder.Append("',");
+                }
+                queryBuilder.Remove(queryBuilder.Length - 1, 1);
+                queryBuilder.Append(')');
+                queryBuilder.Append(',');
+
+                Interlocked.Increment(ref counter);
+                int result = -1;
+                if (counter >= packegeSize)
+                {
+                    result = Insert();
+                }
+                return result;
             }
-            return result;
         }
 
 
@@ -138,13 +172,16 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         public void BeginAdd()
         {
-            if (paramBuilder == null)
+            lock (paramBuilder)
             {
-                paramBuilder = new StringBuilder("(");
-            }
-            else
-            {
-                throw new Exception("Параметры уже вводятся.");
+                if (paramBuilder == null)
+                {
+                    paramBuilder = new StringBuilder("(");
+                }
+                else
+                {
+                    throw new Exception("Параметры уже вводятся.");
+                }
             }
         }
 
@@ -154,13 +191,16 @@ namespace ITsoft.Extensions.MySql
         /// <param name="value"></param>
         public void AddSingle(string value)
         {
-            if (paramBuilder != null)
+            lock (paramBuilder)
             {
-                paramBuilder.Append($"'{value}',");
-            }
-            else
-            {
-                throw new Exception("Параметры еще не вводятся.");
+                if (paramBuilder != null)
+                {
+                    paramBuilder.Append($"'{value}',");
+                }
+                else
+                {
+                    throw new Exception("Параметры еще не вводятся.");
+                }
             }
         }
 
@@ -170,29 +210,31 @@ namespace ITsoft.Extensions.MySql
         /// <param name="apply">Применить результат.</param>
         public void EndAdd(bool apply = true)
         {
-            if (paramBuilder != null)
+            lock (paramBuilder)
             {
-                if (apply && paramBuilder.Length > 3)
+                if (paramBuilder != null)
                 {
-                    paramBuilder.Remove(paramBuilder.Length - 1, 1);
-                    paramBuilder.Append(')');
-                    queryBuilder.Append(paramBuilder.ToString());
-                    queryBuilder.Append(',');
-                    paramBuilder = null;
-
-                    Interlocked.Increment(ref counter);
-                    int result = -1;
-                    if (counter >= packegeSize)
+                    if (apply && paramBuilder.Length > 3)
                     {
-                        result = Insert();
+                        paramBuilder.Remove(paramBuilder.Length - 1, 1);
+                        paramBuilder.Append(')');
+                        queryBuilder.Append(paramBuilder.ToString());
+                        queryBuilder.Append(',');
+                        paramBuilder = null;
+
+                        Interlocked.Increment(ref counter);
+                        int result = -1;
+                        if (counter >= packegeSize)
+                        {
+                            result = Insert();
+                        }
                     }
                 }
+                else
+                {
+                    throw new Exception("Параметры уже вводятся.");
+                }
             }
-            else
-            {
-                throw new Exception("Параметры уже вводятся.");
-            }
-
         }
 
         /// <summary>
@@ -200,20 +242,23 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         public int Insert()
         {
-            int result = -1;
-            if (counter > 0)
+            lock (queryBuilder)
             {
-                queryBuilder.Remove(queryBuilder.Length - 1, 1);
+                int result = -1;
+                if (counter > 0)
+                {
+                    queryBuilder.Remove(queryBuilder.Length - 1, 1);
 
-                //вставка
-                result = adapter.Execute(queryBuilder.ToString());
+                    //вставка
+                    result = adapter.Execute(queryBuilder.ToString());
 
-                queryBuilder.Remove(leftPartSize, queryBuilder.Length - leftPartSize);
-                Interlocked.Exchange(ref counter, 0);
+                    queryBuilder.Remove(leftPartSize, queryBuilder.Length - leftPartSize);
+                    Interlocked.Exchange(ref counter, 0);
+                }
+
+                Inserted?.Invoke(result);
+                return result;
             }
-
-            Inserted?.Invoke(result);
-            return result;
         }
     }
 }

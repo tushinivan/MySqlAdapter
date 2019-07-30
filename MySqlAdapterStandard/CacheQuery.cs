@@ -21,7 +21,7 @@ namespace ITsoft.Extensions.MySql
             this.queryTemplate = queryTemplate;
             this.adapter = adapter;
 
-            cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = options.CacheSize } );
+            cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = options.CacheSize });
             entryOptions = new MemoryCacheEntryOptions()
             {
                 AbsoluteExpirationRelativeToNow = options.AbsoluteExpirationRelativeToNow,
