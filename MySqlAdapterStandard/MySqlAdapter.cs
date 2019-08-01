@@ -410,7 +410,11 @@ namespace ITsoft.Extensions.MySql
         }
         public static string EscapeString(string str)
         {
-            return MySqlHelper.EscapeString(str);
+            if (str != null)
+            {
+                return MySqlHelper.EscapeString(str);
+            }
+            return str;
         }
     }
 
