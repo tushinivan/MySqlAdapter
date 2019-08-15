@@ -13,7 +13,8 @@ namespace MySqlAdapterExaples
         static MySqlAdapter adapter = new MySqlAdapter("User Id=test; Password=test; Host=localhost;Character Set=utf8;");
         static void Main(string[] args)
         {
-            adapter.Error += Adapter_Error;
+            adapter.Error += Adapter_Error1;
+            adapter.ErrorProcessed += Adapter_ErrorProcessed;
 
             adapter.SelectReader("SELECT * FROM test.test_table WHERE id = 1", (row) =>
             {
@@ -21,9 +22,14 @@ namespace MySqlAdapterExaples
             });
         }
 
-        private static void Adapter_Error(Exception ex, string query)
+        private static void Adapter_ErrorProcessed(Exception ex, QueryContext queryContext)
         {
-            //Write Log
+            Console.WriteLine(ex.Message);
+        }
+
+        private static void Adapter_Error1(Exception ex, QueryContext queryContext)
+        {
+            
         }
     }
 }
