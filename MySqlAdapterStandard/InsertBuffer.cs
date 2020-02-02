@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ITsoft.Extensions.MySql
 {
@@ -42,20 +43,22 @@ namespace ITsoft.Extensions.MySql
         private StringBuilder paramBuilder = null;
 
         private int counter = 0;
-        private int packegeSize = 0;
+        private int packageSize = 0;
         private int leftPartSize = 0;
+
+        private Task syncTask;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="adapter">MySqlAdapter адаптер</param>
-        /// <param name="packegeSize">Размер пакета</param>
+        /// <param name="packageSize">Размер пакета</param>
         /// <param name="table">Таблица для вставки</param>
         /// <param name="insertIgnore">Вставка с игнорированием</param>
         /// <param name="columns">Столбцы</param>
-        public InsertBuffer(MySqlAdapter adapter, int packegeSize, string table, bool insertIgnore, params string[] columns)
+        public InsertBuffer(MySqlAdapter adapter, int packageSize, string table, bool insertIgnore, params string[] columns)
         {
-            this.packegeSize = packegeSize;
+            this.packageSize = packageSize;
             this.adapter = adapter;
 
             queryBuilder = new StringBuilder($"INSERT {(!insertIgnore ? "INTO" : "IGNORE")} {table}(", 1000);
@@ -70,6 +73,44 @@ namespace ITsoft.Extensions.MySql
 
             leftPartSize = queryBuilder.Length;
         }
+        public InsertBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize,  string table, bool insertIgnore, params string[] columns)
+        {
+            this.packageSize = packageSize;
+            this.adapter = adapter;
+
+            queryBuilder = new StringBuilder($"INSERT {(!insertIgnore ? "INTO" : "IGNORE")} {table}(", 1000);
+
+            for (int i = 0; i < columns.Length; i++)
+            {
+                queryBuilder.Append(columns[i]);
+                queryBuilder.Append(',');
+            }
+            queryBuilder.Remove(queryBuilder.Length - 1, 1);
+            queryBuilder.Append(") VALUES ");
+
+            leftPartSize = queryBuilder.Length;
+
+            if (syncInterval > TimeSpan.Zero)
+            {
+                syncTask = Task.Run(() => 
+                {
+                    while (true)
+                    {
+                        try
+                        {
+                            Insert();
+                        }
+                        catch
+                        {
+                        }
+                        finally
+                        {
+                            Thread.Sleep(syncInterval);
+                        }
+                    }
+                });
+            }
+        }
 
         /// <summary>
         /// Добавить данные к запросу.
@@ -83,7 +124,7 @@ namespace ITsoft.Extensions.MySql
                 queryBuilder.Append("(" + values + "),");
 
                 int result = 0;
-                if (counter >= packegeSize)
+                if (packageSize > 0 && counter >= packageSize)
                 {
                     result = Insert();
                 }
@@ -112,7 +153,7 @@ namespace ITsoft.Extensions.MySql
 
                 Interlocked.Increment(ref counter);
                 int result = 0;
-                if (counter >= packegeSize)
+                if (packageSize > 0 && counter >= packageSize)
                 {
                     result = Insert();
                 }
@@ -158,7 +199,7 @@ namespace ITsoft.Extensions.MySql
 
                 Interlocked.Increment(ref counter);
                 int result = -1;
-                if (counter >= packegeSize)
+                if (packageSize > 0 && counter >= packageSize)
                 {
                     result = Insert();
                 }
@@ -224,7 +265,7 @@ namespace ITsoft.Extensions.MySql
 
                         Interlocked.Increment(ref counter);
                         int result = -1;
-                        if (counter >= packegeSize)
+                        if (packageSize > 0 && counter >= packageSize)
                         {
                             result = Insert();
                         }
