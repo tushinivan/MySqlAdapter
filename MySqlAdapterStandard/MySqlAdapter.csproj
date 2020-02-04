@@ -4,18 +4,20 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>ITsoft.Extensions.MySql</PackageId>
-    <Version>1.2.2</Version>
+    <Version>1.3.0</Version>
     <Authors>tushin.iv</Authors>
     <Product>ITsoft.Extensions.MySql</Product>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Copyright>ITSoft 2019</Copyright>
-    <Description>MySqlAdapter - easy helper to work with MySql.
+    <Description>
+      MySqlAdapter - easy helper to work with MySql.
 
-Capability:
-1. Packing insert query
-2. Cahcing query
-3. Loopping qeury with error (e.t. deadlock table or transaction)
-4. Character escaping</Description>
+      Capability:
+      1. Packing insert query
+      2. Caching query
+      3. Looping query with error (e.t. deadlock table or transaction)
+      4. Character escaping
+    </Description>
     <PackageProjectUrl>https://github.com/tushinivan/MySqlAdapter</PackageProjectUrl>
     <PackageTags>mysql mysqladapter mysqlhelper</PackageTags>
     <RepositoryUrl>https://github.com/tushinivan/MySqlAdapter</RepositoryUrl>
