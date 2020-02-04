@@ -41,6 +41,7 @@ namespace ITsoft.Extensions.MySql
 
         private int counter = 0;
         private int packageSize = 0;
+        private bool useTransaction = false;
 
         private Task syncTask;
 
@@ -49,18 +50,35 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         /// <param name="adapter">MySqlAdapter адаптер</param>
         /// <param name="packageSize">Размер пакета</param>
-        /// <param name="table">Таблица для вставки</param>
-        /// <param name="insertIgnore">Вставка с игнорированием</param>
-        /// <param name="columns">Столбцы</param>
-        public QueryBuffer(MySqlAdapter adapter, int packageSize)
+        public QueryBuffer(MySqlAdapter adapter, int packageSize, bool useTransaction = false)
         {
             this.packageSize = packageSize;
+            this.useTransaction = useTransaction;
             this.adapter = adapter;
+
+            if (useTransaction)
+            {
+                queryBuilder.AppendLine("START TRANSACTION;");
+            }
         }
-        public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize)
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="adapter">MySqlAdapter адаптер</param>
+        /// <param name="syncInterval">Интервал по истечению которого произойдет выполнение буферизированных запросов.</param>
+        /// <param name="packageSize">Размер пакета</param>
+        /// <param name="useTransaction">Использовать транзакции для вставки буферизированных запросов.</param>
+        public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, bool useTransaction = false)
         {
             this.packageSize = packageSize;
+            this.useTransaction = useTransaction;
             this.adapter = adapter;
+
+            if (useTransaction)
+            {
+                queryBuilder.AppendLine("START TRANSACTION;");
+            }
 
             if (syncInterval > TimeSpan.Zero)
             {
@@ -124,10 +142,20 @@ namespace ITsoft.Extensions.MySql
                 int result = -1;
                 if (counter > 0)
                 {
+                    if (useTransaction)
+                    {
+                        queryBuilder.Append("COMMIT;");
+                    }
+
                     //вставка
                     result = adapter.Execute(queryBuilder.ToString());
 
                     queryBuilder.Clear();
+                    if (useTransaction)
+                    {
+                        queryBuilder.AppendLine("START TRANSACTION;");
+                    }
+
                     Interlocked.Exchange(ref counter, 0);
                 }
 

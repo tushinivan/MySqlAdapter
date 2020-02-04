@@ -398,6 +398,10 @@ namespace ITsoft.Extensions.MySql
             return result;
         }
 
+        /// <summary>
+        /// Получить текущее время сервера MySQL.
+        /// </summary>
+        /// <returns></returns>
         public DateTime GetServerDateTime()
         {
             var result = SelectScalar<DateTime>("SELECT NOW();");
