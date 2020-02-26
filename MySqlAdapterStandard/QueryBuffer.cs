@@ -60,7 +60,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         /// <param name="adapter">MySqlAdapter адаптер</param>
         /// <param name="packageSize">Размер пакета</param>
-        public QueryBuffer(MySqlAdapter adapter, int packageSize, bool useTransaction)
+        public QueryBuffer(MySqlAdapter adapter, int packageSize, bool useTransaction = false)
         {
             this.packageSize = packageSize;
             this.adapter = adapter;
@@ -79,7 +79,7 @@ namespace ITsoft.Extensions.MySql
         /// <param name="syncInterval">Интервал по истечению которого произойдет выполнение буферизированных запросов.</param>
         /// <param name="packageSize">Размер пакета</param>
         /// <param name="useTransaction">Использовать транзакции для вставки буферизированных запросов.</param>
-        public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, bool useTransaction)
+        public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, bool useTransaction = false)
         {
             this.packageSize = packageSize;
             this.adapter = adapter;
