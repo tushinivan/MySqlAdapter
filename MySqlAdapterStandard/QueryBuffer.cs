@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,7 +26,13 @@ namespace ITsoft.Extensions.MySql
                 {
                     lock (queryBuilder)
                     {
-                        return queryBuilder.ToString();
+                        var query = queryBuilder.ToString();
+                        if (useTransaction)
+                        {
+                            query = string.Concat(query, "END TRANSACTION;");
+                        }
+
+                        return query;
                     }
                 }
 
@@ -43,6 +51,8 @@ namespace ITsoft.Extensions.MySql
         private int packageSize = 0;
         private bool useTransaction = false;
 
+        private List<int> operationOffsets = new List<int>();
+
         private Task syncTask;
 
         /// <summary>
@@ -50,15 +60,15 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         /// <param name="adapter">MySqlAdapter адаптер</param>
         /// <param name="packageSize">Размер пакета</param>
-        public QueryBuffer(MySqlAdapter adapter, int packageSize, bool useTransaction = false)
+        public QueryBuffer(MySqlAdapter adapter, int packageSize, bool useTransaction)
         {
             this.packageSize = packageSize;
-            this.useTransaction = useTransaction;
             this.adapter = adapter;
+            this.useTransaction = useTransaction;
 
             if (useTransaction)
             {
-                queryBuilder.AppendLine("START TRANSACTION;");
+                StartTransaction();
             }
         }
 
@@ -69,20 +79,20 @@ namespace ITsoft.Extensions.MySql
         /// <param name="syncInterval">Интервал по истечению которого произойдет выполнение буферизированных запросов.</param>
         /// <param name="packageSize">Размер пакета</param>
         /// <param name="useTransaction">Использовать транзакции для вставки буферизированных запросов.</param>
-        public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, bool useTransaction = false)
+        public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, bool useTransaction)
         {
             this.packageSize = packageSize;
-            this.useTransaction = useTransaction;
             this.adapter = adapter;
+            this.useTransaction = useTransaction;
 
             if (useTransaction)
             {
-                queryBuilder.AppendLine("START TRANSACTION;");
+                StartTransaction();
             }
 
             if (syncInterval > TimeSpan.Zero)
             {
-                syncTask = Task.Run(() => 
+                syncTask = Task.Run(() =>
                 {
                     while (true)
                     {
@@ -103,32 +113,102 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
+        /// Начало транзакцию.
+        /// </summary>
+        public void StartTransaction()
+        {
+            queryBuilder.AppendLine("START TRANSACTION;");
+        }
+
+        /// <summary>
+        /// Конец транзакции.
+        /// </summary>
+        public void EndTransaction()
+        {
+            queryBuilder.AppendLine("COMMIT;");
+        }
+
+        /// <summary>
         /// Добавить данные к запросу.
         /// </summary>
         /// <param name="values">Значения, через запятую.</param>
         public int Add(string query)
         {
+            if (query?.Length > 0)
+            {
+                lock (queryBuilder)
+                {
+                    Interlocked.Increment(ref counter);
+                    operationOffsets.Add(queryBuilder.Length);
+
+                    var trimQuery = query.Trim('\r', '\n');
+                    queryBuilder.Append(trimQuery);
+
+                    if (trimQuery[trimQuery.Length - 1] != ';')
+                    {
+                        queryBuilder.Append(";");
+                    }
+                    queryBuilder.AppendLine();
+
+                    int result = 0;
+                    if (packageSize > 0 && counter >= packageSize)
+                    {
+                        result = Execute();
+                    }
+
+                    return result;
+                }
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Отмена последних N операций вставки, которые еще не были выполенены.
+        /// </summary>
+        /// <param name="lastOperationsNumber"></param>
+        public void Reject(int lastOperationsNumber)
+        {
             lock (queryBuilder)
             {
-                Interlocked.Increment(ref counter);
+                var index = operationOffsets.Count - lastOperationsNumber;
+                var offset = operationOffsets[index];
+                var length = queryBuilder.Length - offset;
 
-                queryBuilder.Append(query);
-                if (!query.EndsWith(";"))
-                {
-                    queryBuilder.AppendLine(";");
-                }
-                else
-                {
-                    queryBuilder.AppendLine();
-                }
+                queryBuilder.Remove(offset, length);
+                operationOffsets.RemoveRange(index, operationOffsets.Count - index);
+            }
+        }
 
-                int result = 0;
-                if (packageSize > 0 && counter >= packageSize)
-                {
-                    result = Execute();
-                }
+        /// <summary>
+        /// Заменить значение.
+        /// </summary>
+        /// <param name="regex"></param>
+        /// <param name="replacement"></param>
+        public void Replace(Regex regex, string replacement)
+        {
+            lock (queryBuilder)
+            {
+                var tmp = queryBuilder.ToString();
+                regex.Replace(tmp, replacement);
 
-                return result;
+                queryBuilder = new StringBuilder(tmp);
+            }
+        }
+
+        /// <summary>
+        /// Заменить значение.
+        /// </summary>
+        /// <param name="regex"></param>
+        /// <param name="evalutor"></param>
+        public void Replace(Regex regex, MatchEvaluator evalutor)
+        {
+            lock (queryBuilder)
+            {
+                var tmp = queryBuilder.ToString();
+                regex.Replace(tmp, evalutor);
+
+                queryBuilder = new StringBuilder(tmp);
             }
         }
 
@@ -144,7 +224,7 @@ namespace ITsoft.Extensions.MySql
                 {
                     if (useTransaction)
                     {
-                        queryBuilder.Append("COMMIT;");
+                        EndTransaction();
                     }
 
                     //вставка
@@ -153,7 +233,7 @@ namespace ITsoft.Extensions.MySql
                     queryBuilder.Clear();
                     if (useTransaction)
                     {
-                        queryBuilder.AppendLine("START TRANSACTION;");
+                        StartTransaction();
                     }
 
                     Interlocked.Exchange(ref counter, 0);
