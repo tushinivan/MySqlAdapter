@@ -29,7 +29,7 @@ namespace ITsoft.Extensions.MySql
                         var query = queryBuilder.ToString();
                         if (useTransaction)
                         {
-                            query = string.Concat(query, "END TRANSACTION;");
+                            query = string.Concat(query, "COMMIT;");
                         }
 
                         return query;
