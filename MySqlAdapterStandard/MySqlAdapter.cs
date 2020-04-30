@@ -9,53 +9,57 @@ using System.Threading;
 
 namespace ITsoft.Extensions.MySql
 {
+    /// <summary>
+    /// Клиент доступа к серверу MySQL.
+    /// </summary>
     public class MySqlAdapter
     {
         /// <summary>
         /// Выполнять запрос выдавший ошибку, через интервал LoopTimeOut.
         /// </summary>
-        public bool LoopQuery { get; set; } = true;
+        public bool RetryOnError { get; set; } = true;
 
         /// <summary>
         /// Время между повторами запросов в мс. По умолчанию 10000 мс. (10 сек)
         /// </summary>
-        public int LoopTimeOut { get; set; } = 10000;
+        public TimeSpan LoopTimeOut { get; set; } = new TimeSpan(0, 0, 10);
 
         /// <summary>
         /// Время ожидания выполнения запроса. По умолчанию 30 сек.
         /// </summary>
-        public int DefaultTimeOut { get; set; } = 30;
+        public int DefaultTimeOut { get; set; } = 300;
 
         /// <summary>
-        /// Максимальное время выполнения запроса. По умолчанию 30 сек.
+        /// 
         /// </summary>
-        public int MaximumTimeOut { get; set; } = 300;
-
-        private int runningQueries;
-        private readonly string connectionString;
-
+        /// <param name="ex">Ошибка.</param>
+        /// <param name="queryContext">Контекст выпонения запроса.</param>
         public delegate void ErrorArgs(Exception ex, QueryContext queryContext);
+
         /// <summary>
         /// Событие происходящее при возникновении ошибки при выполнении запроса.
         /// </summary>
         public event ErrorArgs Error;
+
         /// <summary>
         /// Событие происходящее при стандартной обработке ошибки выполнения запроса.
         /// </summary>
         public event ErrorArgs ErrorProcessed;
 
-        private Dictionary<int, Action<Exception, QueryContext>> ExceptionHandlers = new Dictionary<int, Action<Exception, QueryContext>>();
-        private static Dictionary<string, CacheQuery> caches = new Dictionary<string, CacheQuery>();//кешированные запросы
+        private int _runningQueries;
+        private readonly string _connectionString;
+        private Dictionary<int, Action<Exception, QueryContext>> _exceptionHandlers = new Dictionary<int, Action<Exception, QueryContext>>();
+        private static Dictionary<string, CacheQuery> _caches = new Dictionary<string, CacheQuery>();//кешированные запросы
 
         /// <summary>
-        /// Connection String.
+        /// Создает экземпляр из строки подключения.
         /// </summary>
-        /// <param name="connectionString"></param>
+        /// <param name="connectionString">Строка подключения.</param>
         public MySqlAdapter(string connectionString)
         {
             if (connectionString != null)
             {
-                this.connectionString = connectionString;
+                this._connectionString = connectionString;
                 AddDefaultHandlers();
             }
             else
@@ -65,10 +69,10 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Create connection from source file.
+        /// Создает экземпляр читая строку подключения из файла.
         /// </summary>
-        /// <param name="connectionName">Connection name.</param>
-        /// <param name="connectionFile">Source file.</param>
+        /// <param name="connectionName">Идентификатор подключения.</param>
+        /// <param name="connectionFile">Файл содержащий строку подключения.</param>
         public MySqlAdapter(string connectionName, string connectionFile)
         {
             if (connectionName == null || connectionName.Length == 0)
@@ -93,19 +97,19 @@ namespace ITsoft.Extensions.MySql
                     {
                         if (match.Groups["name"].Value.Trim('"') == connectionName)
                         {
-                            connectionString = match.Groups["connectionString"].Value.Trim('"');
+                            _connectionString = match.Groups["connectionString"].Value.Trim('"');
                             break;
                         }
                     }
                     else
                     {
-                        connectionString = match.Groups["connectionString"].Value.Trim('"');
+                        _connectionString = match.Groups["connectionString"].Value.Trim('"');
                         break;
                     }
                 }
             }
 
-            if (connectionString == null)
+            if (_connectionString == null)
             {
                 throw new Exception($"Can not found connection name \"{connectionName}\" in file \"{connectionFile}\"");
             }
@@ -115,43 +119,25 @@ namespace ITsoft.Extensions.MySql
             }
         }
 
-        private void AddDefaultHandlers()
-        {
-            //ER_BAD_HOST_ERROR
-            ExceptionHandlers.Add(1042, null);
-
-            //ER_LOCK_WAIT_TIMEOUT
-            ExceptionHandlers.Add(1205, null);
-
-            //ER_LOCK_DEADLOCK
-            ExceptionHandlers.Add(1213, null);
-
-            //ER_TIMEOUT
-            ExceptionHandlers.Add(0, (ex, context) =>
-            {
-                if (context.CommandTimeOut < MaximumTimeOut)
-                {
-                    context.CommandTimeOut = MaximumTimeOut;
-                }
-                else
-                {
-                    context.LoopQuery = false;
-                    throw ex;
-                }
-            });
-        }
-
-        public int Execute(string query, bool? loopQuery = null, int? timeOut = null)
+        /// <summary>
+        /// Выполняет запрос и возвращает количество затронутых строк.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+        /// <returns></returns>
+        public int Execute(string query, int? timeOut, bool? retryOnError)
         {
             int result = -1;
 
             QueryContext context = new QueryContext()
             {
                 Query = query,
-                LoopQuery = loopQuery.HasValue ? loopQuery.Value : LoopQuery,
+                Retry = retryOnError.HasValue ? retryOnError.Value : RetryOnError,
                 CommandTimeOut = timeOut.HasValue ? timeOut.Value : DefaultTimeOut
             };
-            result = _Execute(context, (connection, commandTimeOut) => 
+
+            result = _Execute(context, (connection, commandTimeOut) =>
             {
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
@@ -164,14 +150,33 @@ namespace ITsoft.Extensions.MySql
 
             return result;
         }
-        public DataTable Select(string query, bool? loopQuery = null, int? timeOut = null)
+
+        /// <summary>
+        /// Выпоняет запрос и возвращает количество затронутых строк.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <returns></returns>
+        public int Execute(string query, int? timeOut = null)
+        {
+            return Execute(query, timeOut, RetryOnError);
+        }
+
+        /// <summary>
+        /// Выполняет запрос и возвращает данные в виде таблицы <see cref="DataTable"/>.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <returns>Табица с данными или null в случае ошибки выполнения запроса.</returns>
+        public DataTable Select(string query, int? timeOut, bool? retryOnError)
         {
             DataTable result = null;
 
             QueryContext context = new QueryContext()
             {
                 Query = query,
-                LoopQuery = loopQuery.HasValue ? loopQuery.Value : LoopQuery,
+                Retry = retryOnError.HasValue ? retryOnError.Value : RetryOnError,
                 CommandTimeOut = timeOut.HasValue ? timeOut.Value : DefaultTimeOut
             };
             result = _Execute(context, (connection, commandTimeOut) =>
@@ -190,14 +195,33 @@ namespace ITsoft.Extensions.MySql
 
             return result;
         }
-        public DataSet SelectDataSet(string query, bool? loopQuery = null, int? timeOut = null)
+
+        /// <summary>
+        /// Выполняет запрос и возвращает данные в виде таблицы <see cref="DataTable"/>.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut"></param>
+        /// <returns>Табица с данными или null в случае ошибки выполнения запроса.</returns>
+        public DataTable Select(string query, int? timeOut = null)
+        {
+            return Select(query, timeOut, RetryOnError);
+        }
+
+        /// <summary>
+        /// Выполняет запрос и возвращает данные в виде набора данных <see cref="DataSet"/>.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="retryOnError"></param>
+        /// <param name="timeOut"></param>
+        /// <returns>Набор данных или null в случае ошибки выполнения запроса.</returns>
+        public DataSet SelectDataSet(string query, int? timeOut, bool? retryOnError)
         {
             DataSet result = null;
 
             QueryContext context = new QueryContext()
             {
                 Query = query,
-                LoopQuery = loopQuery.HasValue ? loopQuery.Value : LoopQuery,
+                Retry = retryOnError.HasValue ? retryOnError.Value : RetryOnError,
                 CommandTimeOut = timeOut.HasValue ? timeOut.Value : DefaultTimeOut
             };
             result = _Execute(context, (connection, commandTimeOut) =>
@@ -216,14 +240,33 @@ namespace ITsoft.Extensions.MySql
 
             return result;
         }
-        public DataRow SelectRow(string query, bool? loopQuery = null, int? timeOut = null)
+
+        /// <summary>
+        /// Выполняет запрос и возвращает данные в виде набора данных <see cref="DataSet"/>.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <returns>Набор данных или null в случае ошибки выполнения запроса.</returns>
+        public DataSet SelectDataSet(string query, int? timeOut = null)
+        {
+            return SelectDataSet(query, timeOut);
+        }
+
+        /// <summary>
+        /// Выполняет запрос и возвращает данные в виде одной строки <see cref="DataRow"/>.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+        /// <returns>Строка или null в случае ошибки выполнения запроса.</returns>
+        public DataRow SelectRow(string query, int? timeOut, bool? retryOnError)
         {
             DataRow result = null;
 
             QueryContext context = new QueryContext()
             {
                 Query = query,
-                LoopQuery = loopQuery.HasValue ? loopQuery.Value : LoopQuery,
+                Retry = retryOnError.HasValue ? retryOnError.Value : RetryOnError,
                 CommandTimeOut = timeOut.HasValue ? timeOut.Value : DefaultTimeOut
             };
             result = _Execute(context, (connection, commandTimeOut) =>
@@ -246,14 +289,34 @@ namespace ITsoft.Extensions.MySql
 
             return result;
         }
-        public ScalarResult<T> SelectScalar<T>(string query, bool? loopQuery = null, int? timeOut = null)
+
+        /// <summary>
+        /// Выполняет запрос и возвращает данные в виде одной строки <see cref="DataRow"/>.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+        /// <returns>Строка или null в случае ошибки выполнения запроса.</returns>
+        public DataRow SelectRow(string query, int? timeOut = null)
+        {
+            return SelectRow(query, timeOut, RetryOnError);
+        }
+
+        /// <summary>
+        /// Выполняет запрос и возвращает данные в виде экземпяра <see cref="ScalarResult{T}"/>.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+        /// <returns>Строка или null в случае ошибки выполнения запроса.</returns>
+        public ScalarResult<T> SelectScalar<T>(string query, int? timeOut, bool? retryOnError)
         {
             ScalarResult<T> result = null;
 
             QueryContext context = new QueryContext()
             {
                 Query = query,
-                LoopQuery = loopQuery.HasValue ? loopQuery.Value : LoopQuery,
+                Retry = retryOnError.HasValue ? retryOnError.Value : RetryOnError,
                 CommandTimeOut = timeOut.HasValue ? timeOut.Value : DefaultTimeOut
             };
             result = _Execute(context, (connection, commandTimeOut) =>
@@ -282,14 +345,33 @@ namespace ITsoft.Extensions.MySql
 
             return result;
         }
-        public int SelectReader(string query, Action<Dictionary<string, object>> handler, bool? loopQuery = null, int? timeOut = null)
+
+        /// <summary>
+        /// Выполняет запрос и возвращает данные в виде экземпяра <see cref="ScalarResult{T}"/>.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <returns>Экземпяр <see cref="ScalarResult{T}"/> или null в случае ошибки выполнения запроса.</returns>
+        public ScalarResult<T> SelectScalar<T>(string query, int? timeOut = null)
+        {
+            return SelectScalar<T>(query, timeOut, RetryOnError);
+        }
+
+        /// <summary>
+        /// Выполняет запрос и позвояет читать данные построчно.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+        /// <returns>Количество прочитанных строк.</returns>
+        public int SelectReader(string query, Action<Dictionary<string, object>> handler, int? timeOut, bool? retryOnError)
         {
             int result = -1;
 
             QueryContext context = new QueryContext()
             {
                 Query = query,
-                LoopQuery = loopQuery.HasValue ? loopQuery.Value : LoopQuery,
+                Retry = retryOnError.HasValue ? retryOnError.Value : RetryOnError,
                 CommandTimeOut = timeOut.HasValue ? timeOut.Value : DefaultTimeOut
             };
             result = _Execute(context, (connection, commandTimeOut) =>
@@ -322,61 +404,16 @@ namespace ITsoft.Extensions.MySql
             return result;
         }
 
-        private T _Execute<T>(QueryContext queryContext, Func<MySqlConnection, int, T> queryFunc)
+        /// <summary>
+        /// Выполняет запрос и позвояет читать данные построчно.
+        /// </summary>
+        /// <param name="query">SQL запрос.</param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+        /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+        /// <returns>Количество прочитанных строк.</returns>
+        public int SelectReader(string query, Action<Dictionary<string, object>> handler, int? timeOut = null)
         {
-            Interlocked.Increment(ref runningQueries);
-
-            T result = default;
-            try
-            {
-                do
-                {
-                    try
-                    {
-                        using (MySqlConnection connection = new MySqlConnection(connectionString))
-                        {
-                            connection.Open();
-                            result = queryFunc(connection, queryContext.CommandTimeOut);
-                            connection.Close();
-                            break;
-                        }
-                    }
-                    catch (MySqlException ex)
-                    {
-                        //получаем обработчик ошибки
-                        if (ExceptionHandlers.TryGetValue(ex.Number, out Action<Exception, QueryContext> action))
-                        {
-                            action?.Invoke(ex, queryContext);
-                            ErrorProcessed?.Invoke(ex, queryContext);
-                        }
-                        else
-                        {
-                            Error?.Invoke(ex, queryContext);
-                            return result;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Error?.Invoke(ex, queryContext);
-                        break;
-                    }
-
-                    //Если разрешено зацикливание запроса
-                    if (queryContext.LoopQuery)
-                    {
-                        Thread.Sleep(LoopTimeOut);//делаем паузу в запросах
-                    }
-                } while (queryContext.LoopQuery);
-            }
-            catch (Exception ex)
-            {
-                Error?.Invoke(ex, queryContext);
-            }
-            finally
-            {
-                Interlocked.Decrement(ref runningQueries);
-            }
-            return result;
+            return SelectReader(query, handler, timeOut, RetryOnError);
         }
 
         /// <summary>
@@ -387,12 +424,12 @@ namespace ITsoft.Extensions.MySql
         public CacheQuery GetCacheQuery(string name, string query, CacheOptions options)
         {
             CacheQuery result = null;
-            lock (caches)
+            lock (_caches)
             {
-                if (!caches.TryGetValue(name, out result))
+                if (!_caches.TryGetValue(name, out result))
                 {
                     result = new CacheQuery(this, query, options);
-                    caches.Add(name, result);
+                    _caches.Add(name, result);
                 }
             }
             return result;
@@ -412,6 +449,12 @@ namespace ITsoft.Extensions.MySql
 
             throw new Exception("Execute error");
         }
+
+        /// <summary>
+        /// Экранирует симвлы в строке.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
         public static string EscapeString(string str)
         {
             if (str != null)
@@ -420,17 +463,126 @@ namespace ITsoft.Extensions.MySql
             }
             return str;
         }
+
+        private T _Execute<T>(QueryContext queryContext, Func<MySqlConnection, int, T> queryFunc)
+        {
+            Interlocked.Increment(ref _runningQueries);
+
+            T result = default;
+            try
+            {
+                do
+                {
+                    try
+                    {
+                        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+                        {
+                            connection.Open();
+                            result = queryFunc(connection, queryContext.CommandTimeOut);
+                            connection.Close();
+                            break;
+                        }
+                    }
+                    catch (MySqlException ex)
+                    {
+                        //получаем обработчик ошибки
+                        if (_exceptionHandlers.TryGetValue(ex.Number, out Action<Exception, QueryContext> action))
+                        {
+                            action?.Invoke(ex, queryContext);
+                            ErrorProcessed?.Invoke(ex, queryContext);
+                        }
+                        else
+                        {
+                            Error?.Invoke(ex, queryContext);
+                            return result;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (_exceptionHandlers.TryGetValue(-1, out Action<Exception, QueryContext> action))
+                        {
+                            action?.Invoke(ex, queryContext);
+                            ErrorProcessed?.Invoke(ex, queryContext);
+                        }
+                        else
+                        {
+                            Error?.Invoke(ex, queryContext);
+                            return result;
+                        }
+                    }
+
+                    //Если разрешено зацикливание запроса
+                    if (queryContext.Retry)
+                    {
+                        Thread.Sleep(LoopTimeOut);//делаем паузу в запросах
+                    }
+                } while (queryContext.Retry);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _runningQueries);
+            }
+
+            return result;
+        }
+
+        private void AddDefaultHandlers()
+        {
+            //ER_BAD_HOST_ERROR
+            _exceptionHandlers.Add(1042, null);
+
+            //ER_LOCK_WAIT_TIMEOUT
+            _exceptionHandlers.Add(1205, null);
+
+            //ER_LOCK_DEADLOCK
+            _exceptionHandlers.Add(1213, null);
+
+            //ER_TIMEOUT
+            _exceptionHandlers.Add(0, (ex, context) =>
+            {
+                context.CommandTimeOut = 0;
+            });
+
+            //Прочие ошибки
+            _exceptionHandlers.Add(-1, null);
+        }
     }
 
+    /// <summary>
+    /// Скалярное значение.
+    /// </summary>
+    /// <typeparam name="T">Возвращаемый тип данных.</typeparam>
     public class ScalarResult<T>
     {
-        public bool DbNull;
-        public T Value;
+        /// <summary>
+        /// Значение DbNull.
+        /// </summary>
+        public bool DbNull { get; set; }
+
+        /// <summary>
+        /// Значение.
+        /// </summary>
+        public T Value { get; set; }
     }
+
+    /// <summary>
+    /// Контекст выполнения запроса.
+    /// </summary>
     public class QueryContext
     {
+        /// <summary>
+        /// SQL SQL запрос.
+        /// </summary>
         public string Query { get; set; }
+
+        /// <summary>
+        /// Таймаут выполнения SQL запроса.
+        /// </summary>
         public int CommandTimeOut { get; set; }
-        public bool LoopQuery { get; set; }
+
+        /// <summary>
+        /// Повторить выполнение запроса при возникновении ошибки.
+        /// </summary>
+        public bool Retry { get; set; }
     }
 }
