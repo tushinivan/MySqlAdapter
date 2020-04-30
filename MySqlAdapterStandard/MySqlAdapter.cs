@@ -200,7 +200,7 @@ namespace ITsoft.Extensions.MySql
         /// Выполняет запрос и возвращает данные в виде таблицы <see cref="DataTable"/>.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
-        /// <param name="timeOut"></param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
         /// <returns>Табица с данными или null в случае ошибки выполнения запроса.</returns>
         public DataTable Select(string query, int? timeOut = null)
         {
@@ -212,7 +212,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="retryOnError"></param>
-        /// <param name="timeOut"></param>
+        /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
         /// <returns>Набор данных или null в случае ошибки выполнения запроса.</returns>
         public DataSet SelectDataSet(string query, int? timeOut, bool? retryOnError)
         {

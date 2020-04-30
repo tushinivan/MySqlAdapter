@@ -15,19 +15,23 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Количество запросов в очереди.
         /// </summary>
-        public int QueueCount { get => counter; }
+        public int QueueCount { get => _counter; }
+
+        /// <summary>
+        /// SQL запрос.
+        /// </summary>
         public string Query
         {
             get
             {
                 StringBuilder result = null;
 
-                if (counter > 0)
+                if (_counter > 0)
                 {
-                    lock (queryBuilder)
+                    lock (_queryBuilder)
                     {
-                        var query = queryBuilder.ToString();
-                        if (useTransaction)
+                        var query = _queryBuilder.ToString();
+                        if (_useTransaction)
                         {
                             query = string.Concat(query, "COMMIT;");
                         }
@@ -43,17 +47,13 @@ namespace ITsoft.Extensions.MySql
         public delegate void ExecutedArgs(int RowsCount);
         public event ExecutedArgs Executed;
 
-        private readonly MySqlAdapter adapter;
-
-        private StringBuilder queryBuilder = new StringBuilder();
-
-        private int counter = 0;
-        private int packageSize = 0;
-        private bool useTransaction = false;
-
-        private List<int> operationOffsets = new List<int>();
-
-        private Task syncTask;
+        private readonly MySqlAdapter _adapter;
+        private StringBuilder _queryBuilder = new StringBuilder();
+        private int _counter = 0;
+        private int _packageSize = 0;
+        private bool _useTransaction = false;
+        private List<int> _operationOffsets = new List<int>();
+        private Task _syncTask;
 
         /// <summary>
         /// 
@@ -62,9 +62,9 @@ namespace ITsoft.Extensions.MySql
         /// <param name="packageSize">Размер пакета</param>
         public QueryBuffer(MySqlAdapter adapter, int packageSize, bool useTransaction = false)
         {
-            this.packageSize = packageSize;
-            this.adapter = adapter;
-            this.useTransaction = useTransaction;
+            this._packageSize = packageSize;
+            this._adapter = adapter;
+            this._useTransaction = useTransaction;
 
             if (useTransaction)
             {
@@ -81,9 +81,9 @@ namespace ITsoft.Extensions.MySql
         /// <param name="useTransaction">Использовать транзакции для вставки буферизированных запросов.</param>
         public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, bool useTransaction = false)
         {
-            this.packageSize = packageSize;
-            this.adapter = adapter;
-            this.useTransaction = useTransaction;
+            this._packageSize = packageSize;
+            this._adapter = adapter;
+            this._useTransaction = useTransaction;
 
             if (useTransaction)
             {
@@ -92,7 +92,7 @@ namespace ITsoft.Extensions.MySql
 
             if (syncInterval > TimeSpan.Zero)
             {
-                syncTask = Task.Run(() =>
+                _syncTask = Task.Run(() =>
                 {
                     while (true)
                     {
@@ -117,7 +117,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         public void StartTransaction()
         {
-            queryBuilder.AppendLine("START TRANSACTION;");
+            _queryBuilder.AppendLine("START TRANSACTION;");
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         public void EndTransaction()
         {
-            queryBuilder.AppendLine("COMMIT;");
+            _queryBuilder.AppendLine("COMMIT;");
         }
 
         /// <summary>
@@ -136,22 +136,22 @@ namespace ITsoft.Extensions.MySql
         {
             if (query?.Length > 0)
             {
-                lock (queryBuilder)
+                lock (_queryBuilder)
                 {
-                    Interlocked.Increment(ref counter);
-                    operationOffsets.Add(queryBuilder.Length);
+                    Interlocked.Increment(ref _counter);
+                    _operationOffsets.Add(_queryBuilder.Length);
 
                     var trimQuery = query.Trim('\r', '\n');
-                    queryBuilder.Append(trimQuery);
+                    _queryBuilder.Append(trimQuery);
 
                     if (trimQuery[trimQuery.Length - 1] != ';')
                     {
-                        queryBuilder.Append(";");
+                        _queryBuilder.Append(";");
                     }
-                    queryBuilder.AppendLine();
+                    _queryBuilder.AppendLine();
 
                     int result = 0;
-                    if (packageSize > 0 && counter >= packageSize)
+                    if (_packageSize > 0 && _counter >= _packageSize)
                     {
                         result = Execute();
                     }
@@ -169,14 +169,14 @@ namespace ITsoft.Extensions.MySql
         /// <param name="lastOperationsNumber"></param>
         public void Reject(int lastOperationsNumber)
         {
-            lock (queryBuilder)
+            lock (_queryBuilder)
             {
-                var index = operationOffsets.Count - lastOperationsNumber;
-                var offset = operationOffsets[index];
-                var length = queryBuilder.Length - offset;
+                var index = _operationOffsets.Count - lastOperationsNumber;
+                var offset = _operationOffsets[index];
+                var length = _queryBuilder.Length - offset;
 
-                queryBuilder.Remove(offset, length);
-                operationOffsets.RemoveRange(index, operationOffsets.Count - index);
+                _queryBuilder.Remove(offset, length);
+                _operationOffsets.RemoveRange(index, _operationOffsets.Count - index);
             }
         }
 
@@ -187,12 +187,12 @@ namespace ITsoft.Extensions.MySql
         /// <param name="replacement"></param>
         public void Replace(Regex regex, string replacement)
         {
-            lock (queryBuilder)
+            lock (_queryBuilder)
             {
-                var tmp = queryBuilder.ToString();
+                var tmp = _queryBuilder.ToString();
                 regex.Replace(tmp, replacement);
 
-                queryBuilder = new StringBuilder(tmp);
+                _queryBuilder = new StringBuilder(tmp);
             }
         }
 
@@ -203,12 +203,12 @@ namespace ITsoft.Extensions.MySql
         /// <param name="evalutor"></param>
         public void Replace(Regex regex, MatchEvaluator evalutor)
         {
-            lock (queryBuilder)
+            lock (_queryBuilder)
             {
-                var tmp = queryBuilder.ToString();
+                var tmp = _queryBuilder.ToString();
                 regex.Replace(tmp, evalutor);
 
-                queryBuilder = new StringBuilder(tmp);
+                _queryBuilder = new StringBuilder(tmp);
             }
         }
 
@@ -217,26 +217,26 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         public int Execute()
         {
-            lock (queryBuilder)
+            lock (_queryBuilder)
             {
                 int result = -1;
-                if (counter > 0)
+                if (_counter > 0)
                 {
-                    if (useTransaction)
+                    if (_useTransaction)
                     {
                         EndTransaction();
                     }
 
                     //вставка
-                    result = adapter.Execute(queryBuilder.ToString());
+                    result = _adapter.Execute(_queryBuilder.ToString());
 
-                    queryBuilder.Clear();
-                    if (useTransaction)
+                    _queryBuilder.Clear();
+                    if (_useTransaction)
                     {
                         StartTransaction();
                     }
 
-                    Interlocked.Exchange(ref counter, 0);
+                    Interlocked.Exchange(ref _counter, 0);
                 }
 
                 Executed?.Invoke(result);

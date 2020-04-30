@@ -10,19 +10,19 @@ namespace ITsoft.Extensions.MySql
     /// </summary>
     public class CacheQuery
     {
-        private readonly MySqlAdapter adapter;
-        private readonly MemoryCache cache;
-        private readonly MemoryCacheEntryOptions entryOptions;
+        private readonly MySqlAdapter _adapter;
+        private readonly MemoryCache _cache;
+        private readonly MemoryCacheEntryOptions _entryOptions;
 
-        private readonly string queryTemplate;
+        private readonly string _queryTemplate;
 
         public CacheQuery(MySqlAdapter adapter, string queryTemplate, CacheOptions options)
         {
-            this.queryTemplate = queryTemplate;
-            this.adapter = adapter;
+            _queryTemplate = queryTemplate;
+            _adapter = adapter;
 
-            cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = options.CacheSize });
-            entryOptions = new MemoryCacheEntryOptions()
+            _cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = options.CacheSize });
+            _entryOptions = new MemoryCacheEntryOptions()
             {
                 AbsoluteExpirationRelativeToNow = options.AbsoluteExpirationRelativeToNow,
                 SlidingExpiration = options.SlidingExpiration,
@@ -48,18 +48,18 @@ namespace ITsoft.Extensions.MySql
             }
             string paramStr = hashBuilder.ToString();
 
-            if (!cache.TryGetValue(paramStr, out result))
+            if (!_cache.TryGetValue(paramStr, out result))
             {
-                string query = string.Format(queryTemplate, param);
-                result = adapter.Select(query);
+                string query = string.Format(_queryTemplate, param);
+                result = _adapter.Select(query);
 
                 if (cacheNull)
                 {
-                    cache.Set(paramStr, result, entryOptions);
+                    _cache.Set(paramStr, result, _entryOptions);
                 }
                 else if (result != null)
                 {
-                    cache.Set(paramStr, result, entryOptions);
+                    _cache.Set(paramStr, result, _entryOptions);
                 }
             }
 
@@ -84,18 +84,18 @@ namespace ITsoft.Extensions.MySql
             }
             string paramStr = hashBuilder.ToString();
 
-            if (!cache.TryGetValue(paramStr, out result))
+            if (!_cache.TryGetValue(paramStr, out result))
             {
-                string query = string.Format(queryTemplate, param);
-                result = adapter.SelectScalar<T>(query);
+                string query = string.Format(_queryTemplate, param);
+                result = _adapter.SelectScalar<T>(query);
 
                 if (cacheNull)
                 {
-                    cache.Set(paramStr, result, entryOptions);
+                    _cache.Set(paramStr, result, _entryOptions);
                 }
                 else if (result != null)
                 {
-                    cache.Set(paramStr, result, entryOptions);
+                    _cache.Set(paramStr, result, _entryOptions);
                 }
             }
 
