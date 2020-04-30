@@ -77,7 +77,7 @@ namespace ITsoft.Extensions.MySql
 
             _leftPartSize = _queryBuilder.Length;
         }
-        public InsertBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize,  string table, bool insertIgnore, params string[] columns)
+        public InsertBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, string table, bool insertIgnore, params string[] columns)
         {
             _packageSize = packageSize;
             _adapter = adapter;
@@ -96,7 +96,7 @@ namespace ITsoft.Extensions.MySql
 
             if (syncInterval > TimeSpan.Zero)
             {
-                _syncTask = Task.Run(() => 
+                _syncTask = Task.Run(() =>
                 {
                     while (true)
                     {
@@ -287,23 +287,55 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         public int Insert()
         {
-            lock (_queryBuilder)
+            int result = -1;
+
+            string query = CreateQuery();
+            if (query != null)
             {
-                int result = -1;
-                if (_counter > 0)
+                //вставка
+                result = _adapter.Execute(query);
+
+                Inserted?.Invoke(result);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Принудительно выполнить запрос и очистить очередь.
+        /// </summary>
+        public async Task<int> InsertAsync()
+        {
+            int result = -1;
+
+            string query = CreateQuery();
+            if (query != null)
+            {
+                //вставка
+                result = await _adapter.ExecuteAsync(query);
+
+                Inserted?.Invoke(result);
+            }
+
+            return result;
+        }
+
+        private string CreateQuery()
+        {
+            string query = null;
+
+            if (_counter > 0)
+            {
+                lock (_queryBuilder)
                 {
                     _queryBuilder.Remove(_queryBuilder.Length - 1, 1);
-
-                    //вставка
-                    result = _adapter.Execute(_queryBuilder.ToString());
-
+                    query = _queryBuilder.ToString();
                     _queryBuilder.Remove(_leftPartSize, _queryBuilder.Length - _leftPartSize);
                     Interlocked.Exchange(ref _counter, 0);
                 }
-
-                Inserted?.Invoke(result);
-                return result;
             }
+
+            return query;
         }
     }
 }

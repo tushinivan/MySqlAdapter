@@ -2,6 +2,7 @@
 using System;
 using System.Data;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ITsoft.Extensions.MySql
 {
@@ -67,6 +68,42 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
+        /// Запрос на получение данных.
+        /// </summary>
+        /// <param name="query">Форматированный запрос String.Format</param>
+        /// <param name="param">Параметры подстанавки</param>
+        /// <returns></returns>
+        public async Task<DataTable> GetAsync(bool cacheNull, params object[] param)
+        {
+            DataTable result = null;
+
+            StringBuilder hashBuilder = new StringBuilder();
+            for (int i = 0; i < param.Length; i++)
+            {
+                hashBuilder.Append(param[i]);
+                hashBuilder.Append('_');
+            }
+            string paramStr = hashBuilder.ToString();
+
+            if (!_cache.TryGetValue(paramStr, out result))
+            {
+                string query = string.Format(_queryTemplate, param);
+                result = await _adapter.SelectAsync(query);
+
+                if (cacheNull)
+                {
+                    _cache.Set(paramStr, result, _entryOptions);
+                }
+                else if (result != null)
+                {
+                    _cache.Set(paramStr, result, _entryOptions);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Запрос на полчение скалярной переменной.
         /// </summary>
         /// <param name="query">Форматированный запрос как через String.Format</param>
@@ -88,6 +125,42 @@ namespace ITsoft.Extensions.MySql
             {
                 string query = string.Format(_queryTemplate, param);
                 result = _adapter.SelectScalar<T>(query);
+
+                if (cacheNull)
+                {
+                    _cache.Set(paramStr, result, _entryOptions);
+                }
+                else if (result != null)
+                {
+                    _cache.Set(paramStr, result, _entryOptions);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Запрос на полчение скалярной переменной.
+        /// </summary>
+        /// <param name="query">Форматированный запрос как через String.Format</param>
+        /// <param name="param">Параметры подстанавливаемые в запросю</param>
+        /// <returns></returns>
+        public async Task<ScalarResult<T>> GetScalarAsync<T>(bool cacheNull, params object[] param)
+        {
+            ScalarResult<T> result = null;
+
+            StringBuilder hashBuilder = new StringBuilder();
+            for (int i = 0; i < param.Length; i++)
+            {
+                hashBuilder.Append(param[i]);
+                hashBuilder.Append('_');
+            }
+            string paramStr = hashBuilder.ToString();
+
+            if (!_cache.TryGetValue(paramStr, out result))
+            {
+                string query = string.Format(_queryTemplate, param);
+                result = await _adapter.SelectScalarAsync<T>(query);
 
                 if (cacheNull)
                 {
