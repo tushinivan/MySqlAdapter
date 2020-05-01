@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ITsoft.Extensions.MySql
 {
     /// <summary>
-    /// Кеш запросов к БД.
+    /// кэш запросов к БД.
     /// </summary>
     public class CacheQuery
     {
@@ -177,20 +177,20 @@ namespace ITsoft.Extensions.MySql
     }
 
     /// <summary>
-    /// Параметры кеша.
+    /// Параметры кэша.
     /// </summary>
     public class CacheOptions
     {
         /// <summary>
-        /// Максимальный размер кеша.
+        /// Максимальный размер кэша.
         /// </summary>
         public int CacheSize { get; set; }
         /// <summary>
-        /// Время существования записи в кеше.
+        /// Время существования записи в кэше.
         /// </summary>
         public TimeSpan? AbsoluteExpirationRelativeToNow { get; set; }
         /// <summary>
-        /// Время существования записи в кеше с момента последнего обращения.
+        /// Время существования записи в кэше с момента последнего обращения.
         /// </summary>
         public TimeSpan? SlidingExpiration { get; set; }
     }

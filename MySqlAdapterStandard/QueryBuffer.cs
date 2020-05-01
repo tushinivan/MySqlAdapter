@@ -44,8 +44,16 @@ namespace ITsoft.Extensions.MySql
             }
         }
 
-        public delegate void ExecutedArgs(int RowsCount);
-        public event ExecutedArgs Executed;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="rowsCount">Количество задействованных строк.</param>
+        public delegate void ExecutedArgs(int rowsCount);
+
+        /// <summary>
+        /// Вызывается поcле успешного выполнения запроса.
+        /// </summary>
+        public event ExecutedArgs AfterExecute;
 
         private readonly MySqlAdapter _adapter;
         private StringBuilder _queryBuilder = new StringBuilder();
@@ -60,6 +68,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         /// <param name="adapter">MySqlAdapter адаптер</param>
         /// <param name="packageSize">Размер пакета</param>
+        /// <param name="useTransaction">Отсправить запрос как одну транзакцию.</param>
         public QueryBuffer(MySqlAdapter adapter, int packageSize, bool useTransaction = false)
         {
             this._packageSize = packageSize;
@@ -81,9 +90,9 @@ namespace ITsoft.Extensions.MySql
         /// <param name="useTransaction">Использовать транзакции для вставки буферизированных запросов.</param>
         public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, bool useTransaction = false)
         {
-            this._packageSize = packageSize;
-            this._adapter = adapter;
-            this._useTransaction = useTransaction;
+            _packageSize = packageSize;
+            _adapter = adapter;
+            _useTransaction = useTransaction;
 
             if (useTransaction)
             {
@@ -92,13 +101,13 @@ namespace ITsoft.Extensions.MySql
 
             if (syncInterval > TimeSpan.Zero)
             {
-                _syncTask = Task.Run(() =>
+                _syncTask = Task.Run(async () =>
                 {
                     while (true)
                     {
                         try
                         {
-                            Execute();
+                            await ExecuteAsync();
                         }
                         catch
                         {
@@ -131,7 +140,7 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Добавить данные к запросу.
         /// </summary>
-        /// <param name="values">Значения, через запятую.</param>
+        /// <param name="query">Запрос для добавления в буфер.</param>
         public int Add(string query)
         {
             if (query?.Length > 0)
@@ -164,7 +173,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Отмена последних N операций вставки, которые еще не были выполенены.
+        /// Отмена последних N операций вставки, которые еще не были выполнены.
         /// </summary>
         /// <param name="lastOperationsNumber"></param>
         public void Reject(int lastOperationsNumber)
@@ -226,7 +235,7 @@ namespace ITsoft.Extensions.MySql
                 //вставка
                 result = _adapter.Execute(query);
 
-                Executed?.Invoke(result);
+                AfterExecute?.Invoke(result);
             }
 
             return result;
@@ -245,7 +254,7 @@ namespace ITsoft.Extensions.MySql
                 //вставка
                 result = await _adapter.ExecuteAsync(query);
 
-                Executed?.Invoke(result);
+                AfterExecute?.Invoke(result);
             }
 
             return result;

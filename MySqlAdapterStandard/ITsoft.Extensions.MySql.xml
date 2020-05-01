@@ -1,0 +1,561 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ITsoft.Extensions.MySql</name>
+    </assembly>
+    <members>
+        <member name="T:ITsoft.Extensions.MySql.CacheQuery">
+            <summary>
+            кэш запросов к БД.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.CacheQuery.Get(System.Boolean,System.Object[])">
+            <summary>
+            Запрос на получение данных.
+            </summary>
+            <param name="query">Форматированный запрос String.Format</param>
+            <param name="param">Параметры подстанавки</param>
+            <returns></returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.CacheQuery.GetAsync(System.Boolean,System.Object[])">
+            <summary>
+            Запрос на получение данных.
+            </summary>
+            <param name="query">Форматированный запрос String.Format</param>
+            <param name="param">Параметры подстанавки</param>
+            <returns></returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.CacheQuery.GetScalar``1(System.Boolean,System.Object[])">
+            <summary>
+            Запрос на полчение скалярной переменной.
+            </summary>
+            <param name="query">Форматированный запрос как через String.Format</param>
+            <param name="param">Параметры подстанавливаемые в запросю</param>
+            <returns></returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.CacheQuery.GetScalarAsync``1(System.Boolean,System.Object[])">
+            <summary>
+            Запрос на полчение скалярной переменной.
+            </summary>
+            <param name="query">Форматированный запрос как через String.Format</param>
+            <param name="param">Параметры подстанавливаемые в запросю</param>
+            <returns></returns>
+        </member>
+        <member name="T:ITsoft.Extensions.MySql.CacheOptions">
+            <summary>
+            Параметры кэша.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.CacheOptions.CacheSize">
+            <summary>
+            Максимальный размер кэша.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.CacheOptions.AbsoluteExpirationRelativeToNow">
+            <summary>
+            Время существования записи в кэше.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.CacheOptions.SlidingExpiration">
+            <summary>
+            Время существования записи в кэше с момента последнего обращения.
+            </summary>
+        </member>
+        <member name="T:ITsoft.Extensions.MySql.InsertBuffer">
+            <summary>
+            Буфер пакетной вставки.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.InsertBuffer.QueueCount">
+            <summary>
+            Количество запросов в очереди.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.InsertBuffer.Query">
+            <summary>
+            SQL запрос.
+            </summary>
+        </member>
+        <member name="T:ITsoft.Extensions.MySql.InsertBuffer.InsertedArgs">
+            <summary>
+            
+            </summary>
+            <param name="rowsCount">Количество вставленных строк.</param>
+        </member>
+        <member name="E:ITsoft.Extensions.MySql.InsertBuffer.AfterInsert">
+            <summary>
+            Вызывается поcле успешного выполнения запроса вставки.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.#ctor(ITsoft.Extensions.MySql.MySqlAdapter,System.Int32,System.String,System.Boolean,System.String[])">
+            <summary>
+            
+            </summary>
+            <param name="adapter"><see cref="T:ITsoft.Extensions.MySql.MySqlAdapter"/> адаптер</param>
+            <param name="packageSize">Размер пакета.</param>
+            <param name="table">Таблица для вставки/</param>
+            <param name="insertIgnore">Вставка с игнорированием.</param>
+            <param name="columns">Столбцы/</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.#ctor(ITsoft.Extensions.MySql.MySqlAdapter,System.TimeSpan,System.Int32,System.String,System.Boolean,System.String[])">
+            <summary>
+            
+            </summary>
+            <param name="adapter"><see cref="T:ITsoft.Extensions.MySql.MySqlAdapter"/> адаптер</param>
+            <param name="packageSize">Размер пакета.</param>
+            <param name="table">Таблица для вставки/</param>
+            <param name="insertIgnore">Вставка с игнорированием.</param>
+            <param name="syncInterval">Период с которым выполняется вставка.</param>
+            <param name="columns">Столбцы/</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.Add(System.String)">
+            <summary>
+            Добавить данные к запросу.
+            </summary>
+            <param name="values">Значения, через запятую.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.Add(System.String[])">
+            <summary>
+            Добавить данные к запросу.
+            </summary>
+            <param name="values">Значения, через запятую.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.Add(System.Object[])">
+            <summary>
+            Добавить данные к запросу.
+            </summary>
+            <param name="values">Значение полей. Апострофы из строк удаляются автоматически.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.BeginAdd">
+            <summary>
+            Вводит буфер в режим вставки одиночных значений.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.AddSingle(System.String)">
+            <summary>
+            Вставляет единичное значение.
+            </summary>
+            <param name="value"></param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.EndAdd(System.Boolean)">
+            <summary>
+            Выводит буфер из режима одиночной вставки значений и добавляет значение в очередь.
+            </summary>
+            <param name="apply">Применить результат.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.Insert">
+            <summary>
+            Принудительно выполнить запрос и очистить очередь.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.InsertAsync">
+            <summary>
+            Принудительно выполнить запрос и очистить очередь.
+            </summary>
+        </member>
+        <member name="T:ITsoft.Extensions.MySql.MySqlAdapter">
+            <summary>
+            Клиент доступа к серверу MySQL.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.MySqlAdapter.RetryOnError">
+            <summary>
+            Выполнять запрос выдавший ошибку, через интервал LoopTimeOut.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.MySqlAdapter.IntervalBetweenTrying">
+            <summary>
+            Время между повторами запросов в мс. По умолчанию 10 сек.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.MySqlAdapter.DefaultTimeOut">
+            <summary>
+            Время ожидания выполнения запроса. По умолчанию 30 сек.
+            </summary>
+        </member>
+        <member name="T:ITsoft.Extensions.MySql.MySqlAdapter.ErrorArgs">
+            <summary>
+            
+            </summary>
+            <param name="ex">Ошибка.</param>
+            <param name="queryContext">Контекст выполнения запроса.</param>
+        </member>
+        <member name="E:ITsoft.Extensions.MySql.MySqlAdapter.Error">
+            <summary>
+            Событие происходящее при возникновении ошибки при выполнении запроса.
+            </summary>
+        </member>
+        <member name="E:ITsoft.Extensions.MySql.MySqlAdapter.ErrorProcessed">
+            <summary>
+            Событие происходящее при стандартной обработке ошибки выполнения запроса.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.#ctor(System.String)">
+            <summary>
+            Создает экземпляр из строки подключения.
+            </summary>
+            <param name="connectionString">Строка подключения.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.#ctor(System.String,System.String)">
+            <summary>
+            Создает экземпляр читая строку подключения из файла.
+            </summary>
+            <param name="connectionName">Идентификатор подключения.</param>
+            <param name="connectionFile">Файл содержащий строку подключения.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.Execute(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает количество затронутых строк.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <returns></returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.Execute(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает количество затронутых строк.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns></returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.Select(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде таблицы <see cref="T:System.Data.DataTable"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Таблица с данными или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.Select(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде таблицы <see cref="T:System.Data.DataTable"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Таблица с данными или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectDataSet(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде набора данных <see cref="T:System.Data.DataSet"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="retryOnError"></param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Набор данных или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectDataSet(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде набора данных <see cref="T:System.Data.DataSet"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Набор данных или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectRow(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде одной строки <see cref="T:System.Data.DataRow"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <returns>Строка или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectRow(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде одной строки <see cref="T:System.Data.DataRow"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Строка или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectScalar``1(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде экземпляра <see cref="T:ITsoft.Extensions.MySql.ScalarResult`1"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <returns>Строка или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectScalar``1(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде экземпляра <see cref="T:ITsoft.Extensions.MySql.ScalarResult`1"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Экземпяр <see cref="T:ITsoft.Extensions.MySql.ScalarResult`1"/> или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectReader(System.String,System.Action{System.Collections.Generic.Dictionary{System.String,System.Object}},System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и позволяет читать данные построчно.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <param name="handler">Обработчик строк.</param>
+            <returns>Количество прочитанных строк.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectReader(System.String,System.Action{System.Collections.Generic.Dictionary{System.String,System.Object}},System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и позволяет читать данные построчно.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="handler">Обработчик строк.</param>
+            <returns>Количество прочитанных строк.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.GetCacheQuery(System.String,System.String,ITsoft.Extensions.MySql.CacheOptions)">
+            <summary>
+            Получает кэш запросов по имени или создает новый.
+            </summary>
+            <param name="name">Название</param>
+            <param name="queryTemplate">Шаблон запросов.</param>
+            <param name="options">Опции кэширования.</param>
+            <returns>Возвращает экземпяр <see cref="T:ITsoft.Extensions.MySql.CacheQuery"/>.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.GetServerDateTime">
+            <summary>
+            Получить текущее время сервера MySQL.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.EscapeString(System.String)">
+            <summary>
+            Экранирует символы в строке.
+            </summary>
+            <param name="str"></param>
+            <returns></returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.ExecuteAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает количество затронутых строк.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <returns></returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.ExecuteAsync(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает количество затронутых строк.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns></returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде таблицы <see cref="T:System.Data.DataTable"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Таблица с данными или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectAsync(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде таблицы <see cref="T:System.Data.DataTable"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Таблица с данными или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectDataSetAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде набора данных <see cref="T:System.Data.DataSet"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="retryOnError"></param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Набор данных или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectDataSetAsync(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде набора данных <see cref="T:System.Data.DataSet"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Набор данных или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectRowAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде одной строки <see cref="T:System.Data.DataRow"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <returns>Строка или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectRowAsync(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде одной строки <see cref="T:System.Data.DataRow"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <returns>Строка или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectScalarAsync``1(System.String,System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде экземпляра <see cref="T:ITsoft.Extensions.MySql.ScalarResult`1"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <returns>Строка или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectScalarAsync``1(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и возвращает данные в виде экземпляра <see cref="T:ITsoft.Extensions.MySql.ScalarResult`1"/>.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Экземпяр <see cref="T:ITsoft.Extensions.MySql.ScalarResult`1"/> или null в случае ошибки выполнения запроса.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectReaderAsync(System.String,System.Action{System.Collections.Generic.Dictionary{System.String,System.Object}},System.Nullable{System.Int32},System.Nullable{System.Boolean})">
+            <summary>
+            Выполняет запрос и позволяет читать данные построчно.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+            <returns>Количество прочитанных строк.</returns>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.MySqlAdapter.SelectReaderAsync(System.String,System.Action{System.Collections.Generic.Dictionary{System.String,System.Object}},System.Nullable{System.Int32})">
+            <summary>
+            Выполняет запрос и позволяет читать данные построчно.
+            </summary>
+            <param name="query">SQL запрос.</param>
+            <param name="timeOut">Таймаут выполнения SQL запроса.</param>
+            <returns>Количество прочитанных строк.</returns>
+        </member>
+        <member name="T:ITsoft.Extensions.MySql.ScalarResult`1">
+            <summary>
+            Скалярное значение.
+            </summary>
+            <typeparam name="T">Возвращаемый тип данных.</typeparam>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.ScalarResult`1.DbNull">
+            <summary>
+            Значение DbNull.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.ScalarResult`1.Value">
+            <summary>
+            Значение.
+            </summary>
+        </member>
+        <member name="T:ITsoft.Extensions.MySql.QueryContext">
+            <summary>
+            Контекст выполнения запроса.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.QueryContext.Query">
+            <summary>
+            SQL SQL запрос.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.QueryContext.CommandTimeOut">
+            <summary>
+            Таймаут выполнения SQL запроса.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.QueryContext.Retry">
+            <summary>
+            Повторить выполнение запроса при возникновении ошибки.
+            </summary>
+        </member>
+        <member name="T:ITsoft.Extensions.MySql.QueryBuffer">
+            <summary>
+            Буфер пакетной вставки запросов.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.QueryBuffer.QueueCount">
+            <summary>
+            Количество запросов в очереди.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.QueryBuffer.Query">
+            <summary>
+            SQL запрос.
+            </summary>
+        </member>
+        <member name="T:ITsoft.Extensions.MySql.QueryBuffer.ExecutedArgs">
+            <summary>
+            
+            </summary>
+            <param name="rowsCount">Количество задействованных строк.</param>
+        </member>
+        <member name="E:ITsoft.Extensions.MySql.QueryBuffer.AfterExecute">
+            <summary>
+            Вызывается поcле успешного выполнения запроса.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.#ctor(ITsoft.Extensions.MySql.MySqlAdapter,System.Int32,System.Boolean)">
+            <summary>
+            
+            </summary>
+            <param name="adapter">MySqlAdapter адаптер</param>
+            <param name="packageSize">Размер пакета</param>
+            <param name="useTransaction">Отсправить запрос как одну транзакцию.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.#ctor(ITsoft.Extensions.MySql.MySqlAdapter,System.TimeSpan,System.Int32,System.Boolean)">
+            <summary>
+            
+            </summary>
+            <param name="adapter">MySqlAdapter адаптер</param>
+            <param name="syncInterval">Интервал по истечению которого произойдет выполнение буферизированных запросов.</param>
+            <param name="packageSize">Размер пакета</param>
+            <param name="useTransaction">Использовать транзакции для вставки буферизированных запросов.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.StartTransaction">
+            <summary>
+            Начало транзакцию.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.EndTransaction">
+            <summary>
+            Конец транзакции.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Add(System.String)">
+            <summary>
+            Добавить данные к запросу.
+            </summary>
+            <param name="query">Запрос для добавления в буфер.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Reject(System.Int32)">
+            <summary>
+            Отмена последних N операций вставки, которые еще не были выполнены.
+            </summary>
+            <param name="lastOperationsNumber"></param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Replace(System.Text.RegularExpressions.Regex,System.String)">
+            <summary>
+            Заменить значение.
+            </summary>
+            <param name="regex"></param>
+            <param name="replacement"></param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Replace(System.Text.RegularExpressions.Regex,System.Text.RegularExpressions.MatchEvaluator)">
+            <summary>
+            Заменить значение.
+            </summary>
+            <param name="regex"></param>
+            <param name="evalutor"></param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Execute">
+            <summary>
+            Принудительно выполнить запрос и очистить очередь.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.ExecuteAsync">
+            <summary>
+            Принудительно выполнить запрос и очистить очередь.
+            </summary>
+        </member>
+    </members>
+</doc>

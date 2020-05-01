@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>ITsoft.Extensions.MySql</PackageId>
-    <Version>1.3.1.2</Version>
+    <Version>1.4</Version>
     <Authors>tushin.iv</Authors>
     <Product>ITsoft.Extensions.MySql</Product>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -25,6 +25,10 @@
     <Company>ITSoft</Company>
     <AssemblyName>ITsoft.Extensions.MySql</AssemblyName>
     <RootNamespace>ITsoft.Extensions.MySql</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>C:\Users\tushi\source\repos\MySqlAdapter\MySqlAdapterStandard\ITsoft.Extensions.MySql.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

@@ -43,7 +43,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выпоняет запрос и возвращает количество затронутых строк.
+        /// Выполняет запрос и возвращает количество затронутых строк.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
@@ -59,7 +59,7 @@ namespace ITsoft.Extensions.MySql
         /// <param name="query">SQL запрос.</param>
         /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
-        /// <returns>Табица с данными или null в случае ошибки выполнения запроса.</returns>
+        /// <returns>Таблица с данными или null в случае ошибки выполнения запроса.</returns>
         public async Task<DataTable> SelectAsync(string query, int? timeOut, bool? retryOnError)
         {
             DataTable result = null;
@@ -92,7 +92,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
-        /// <returns>Табица с данными или null в случае ошибки выполнения запроса.</returns>
+        /// <returns>Таблица с данными или null в случае ошибки выполнения запроса.</returns>
         public Task<DataTable> SelectAsync(string query, int? timeOut = null)
         {
             return SelectAsync(query, timeOut, RetryOnError);
@@ -194,7 +194,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выполняет запрос и возвращает данные в виде экземпяра <see cref="ScalarResult{T}"/>.
+        /// Выполняет запрос и возвращает данные в виде экземпляра <see cref="ScalarResult{T}"/>.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
@@ -238,7 +238,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выполняет запрос и возвращает данные в виде экземпяра <see cref="ScalarResult{T}"/>.
+        /// Выполняет запрос и возвращает данные в виде экземпляра <see cref="ScalarResult{T}"/>.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
@@ -249,7 +249,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выполняет запрос и позвояет читать данные построчно.
+        /// Выполняет запрос и позволяет читать данные построчно.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
@@ -296,7 +296,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выполняет запрос и позвояет читать данные построчно.
+        /// Выполняет запрос и позволяет читать данные построчно.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
@@ -356,7 +356,7 @@ namespace ITsoft.Extensions.MySql
                     //Если разрешено зацикливание запроса
                     if (queryContext.Retry)
                     {
-                        Thread.Sleep(LoopTimeOut);//делаем паузу в запросах
+                        Thread.Sleep(IntervalBetweenTrying);//делаем паузу в запросах
                     }
                 } while (queryContext.Retry);
             }

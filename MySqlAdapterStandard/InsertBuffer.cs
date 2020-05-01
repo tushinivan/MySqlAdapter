@@ -38,8 +38,16 @@ namespace ITsoft.Extensions.MySql
             }
         }
 
-        public delegate void InsertedArgs(int RowsCount);
-        public event InsertedArgs Inserted;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="rowsCount">Количество вставленных строк.</param>
+        public delegate void InsertedArgs(int rowsCount);
+
+        /// <summary>
+        /// Вызывается поcле успешного выполнения запроса вставки.
+        /// </summary>
+        public event InsertedArgs AfterInsert;
 
         private readonly MySqlAdapter _adapter;
 
@@ -77,6 +85,16 @@ namespace ITsoft.Extensions.MySql
 
             _leftPartSize = _queryBuilder.Length;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="adapter"><see cref="MySqlAdapter"/> адаптер</param>
+        /// <param name="packageSize">Размер пакета.</param>
+        /// <param name="table">Таблица для вставки/</param>
+        /// <param name="insertIgnore">Вставка с игнорированием.</param>
+        /// <param name="syncInterval">Период с которым выполняется вставка.</param>
+        /// <param name="columns">Столбцы/</param>
         public InsertBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, string table, bool insertIgnore, params string[] columns)
         {
             _packageSize = packageSize;
@@ -96,13 +114,13 @@ namespace ITsoft.Extensions.MySql
 
             if (syncInterval > TimeSpan.Zero)
             {
-                _syncTask = Task.Run(() =>
+                _syncTask = Task.Run(async () =>
                 {
                     while (true)
                     {
                         try
                         {
-                            Insert();
+                            await InsertAsync();
                         }
                         catch
                         {
@@ -295,7 +313,7 @@ namespace ITsoft.Extensions.MySql
                 //вставка
                 result = _adapter.Execute(query);
 
-                Inserted?.Invoke(result);
+                AfterInsert?.Invoke(result);
             }
 
             return result;
@@ -314,7 +332,7 @@ namespace ITsoft.Extensions.MySql
                 //вставка
                 result = await _adapter.ExecuteAsync(query);
 
-                Inserted?.Invoke(result);
+                AfterInsert?.Invoke(result);
             }
 
             return result;

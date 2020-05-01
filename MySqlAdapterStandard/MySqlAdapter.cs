@@ -20,9 +20,9 @@ namespace ITsoft.Extensions.MySql
         public bool RetryOnError { get; set; } = true;
 
         /// <summary>
-        /// Время между повторами запросов в мс. По умолчанию 10000 мс. (10 сек)
+        /// Время между повторами запросов в мс. По умолчанию 10 сек.
         /// </summary>
-        public TimeSpan LoopTimeOut { get; set; } = new TimeSpan(0, 0, 10);
+        public TimeSpan IntervalBetweenTrying { get; set; } = new TimeSpan(0, 0, 10);
 
         /// <summary>
         /// Время ожидания выполнения запроса. По умолчанию 30 сек.
@@ -33,7 +33,7 @@ namespace ITsoft.Extensions.MySql
         /// 
         /// </summary>
         /// <param name="ex">Ошибка.</param>
-        /// <param name="queryContext">Контекст выпонения запроса.</param>
+        /// <param name="queryContext">Контекст выполнения запроса.</param>
         public delegate void ErrorArgs(Exception ex, QueryContext queryContext);
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace ITsoft.Extensions.MySql
         private int _runningQueries;
         private readonly string _connectionString;
         private Dictionary<int, Action<Exception, QueryContext>> _exceptionHandlers = new Dictionary<int, Action<Exception, QueryContext>>();
-        private static Dictionary<string, CacheQuery> _caches = new Dictionary<string, CacheQuery>();//кешированные запросы
+        private static Dictionary<string, CacheQuery> _caches = new Dictionary<string, CacheQuery>();//кэшированные запросы
 
         /// <summary>
         /// Создает экземпляр из строки подключения.
@@ -152,7 +152,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выпоняет запрос и возвращает количество затронутых строк.
+        /// Выполняет запрос и возвращает количество затронутых строк.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
@@ -168,7 +168,7 @@ namespace ITsoft.Extensions.MySql
         /// <param name="query">SQL запрос.</param>
         /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
-        /// <returns>Табица с данными или null в случае ошибки выполнения запроса.</returns>
+        /// <returns>Таблица с данными или null в случае ошибки выполнения запроса.</returns>
         public DataTable Select(string query, int? timeOut, bool? retryOnError)
         {
             DataTable result = null;
@@ -201,7 +201,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
-        /// <returns>Табица с данными или null в случае ошибки выполнения запроса.</returns>
+        /// <returns>Таблица с данными или null в случае ошибки выполнения запроса.</returns>
         public DataTable Select(string query, int? timeOut = null)
         {
             return Select(query, timeOut, RetryOnError);
@@ -295,7 +295,6 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
-        /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
         /// <returns>Строка или null в случае ошибки выполнения запроса.</returns>
         public DataRow SelectRow(string query, int? timeOut = null)
         {
@@ -303,7 +302,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выполняет запрос и возвращает данные в виде экземпяра <see cref="ScalarResult{T}"/>.
+        /// Выполняет запрос и возвращает данные в виде экземпляра <see cref="ScalarResult{T}"/>.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
@@ -347,7 +346,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выполняет запрос и возвращает данные в виде экземпяра <see cref="ScalarResult{T}"/>.
+        /// Выполняет запрос и возвращает данные в виде экземпляра <see cref="ScalarResult{T}"/>.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
@@ -358,11 +357,12 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выполняет запрос и позвояет читать данные построчно.
+        /// Выполняет запрос и позволяет читать данные построчно.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
         /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+        /// <param name="handler">Обработчик строк.</param>
         /// <returns>Количество прочитанных строк.</returns>
         public int SelectReader(string query, Action<Dictionary<string, object>> handler, int? timeOut, bool? retryOnError)
         {
@@ -405,11 +405,11 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Выполняет запрос и позвояет читать данные построчно.
+        /// Выполняет запрос и позволяет читать данные построчно.
         /// </summary>
         /// <param name="query">SQL запрос.</param>
         /// <param name="timeOut">Таймаут выполнения SQL запроса.</param>
-        /// <param name="retryOnError">Повторять выполнение запроса при возникновении ошибки.</param>
+        /// <param name="handler">Обработчик строк.</param>
         /// <returns>Количество прочитанных строк.</returns>
         public int SelectReader(string query, Action<Dictionary<string, object>> handler, int? timeOut = null)
         {
@@ -417,18 +417,20 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Получает кеш запрсов по имени или создает новый.
+        /// Получает кэш запросов по имени или создает новый.
         /// </summary>
         /// <param name="name">Название</param>
-        /// <returns></returns>
-        public CacheQuery GetCacheQuery(string name, string query, CacheOptions options)
+        /// <param name="queryTemplate">Шаблон запросов.</param>
+        /// <param name="options">Опции кэширования.</param>
+        /// <returns>Возвращает экземпяр <see cref="CacheQuery"/>.</returns>
+        public CacheQuery GetCacheQuery(string name, string queryTemplate, CacheOptions options)
         {
             CacheQuery result = null;
             lock (_caches)
             {
                 if (!_caches.TryGetValue(name, out result))
                 {
-                    result = new CacheQuery(this, query, options);
+                    result = new CacheQuery(this, queryTemplate, options);
                     _caches.Add(name, result);
                 }
             }
@@ -451,7 +453,7 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
-        /// Экранирует симвлы в строке.
+        /// Экранирует символы в строке.
         /// </summary>
         /// <param name="str"></param>
         /// <returns></returns>
@@ -514,7 +516,7 @@ namespace ITsoft.Extensions.MySql
                     //Если разрешено зацикливание запроса
                     if (queryContext.Retry)
                     {
-                        Thread.Sleep(LoopTimeOut);//делаем паузу в запросах
+                        Thread.Sleep(IntervalBetweenTrying);//делаем паузу в запросах
                     }
                 } while (queryContext.Retry);
             }
