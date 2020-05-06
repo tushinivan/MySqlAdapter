@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 namespace ITsoft.Extensions.MySql
 {
     /// <summary>
-    /// Буфер пакетной вставки.
+    /// Буфер пакетной вставки SQL запросов.
     /// </summary>
-    public class InsertBuffer
+    public sealed class InsertBuffer : IDisposable
     {
         /// <summary>
         /// Количество запросов в очереди.
@@ -39,6 +39,28 @@ namespace ITsoft.Extensions.MySql
         }
 
         /// <summary>
+        /// Приостановить автоматическую синхронизацию.
+        /// </summary>
+        public bool SyncPaused { get; set; }
+
+        /// <summary>
+        /// Дата и время последней синхронизации.
+        /// </summary>
+        public DateTime SyncDateTime 
+        {
+            get 
+            {
+                if (_syncTimer != null)
+                {
+                    return _syncDateTime;
+                }
+
+                throw new NotImplementedException();
+            }
+            private set { _syncDateTime = value; }
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="rowsCount">Количество вставленных строк.</param>
@@ -58,7 +80,8 @@ namespace ITsoft.Extensions.MySql
         private int _packageSize = 0;
         private int _leftPartSize = 0;
 
-        private Task _syncTask;
+        private Timer _syncTimer;
+        private DateTime _syncDateTime;
 
         /// <summary>
         /// 
@@ -112,26 +135,16 @@ namespace ITsoft.Extensions.MySql
 
             _leftPartSize = _queryBuilder.Length;
 
-            if (syncInterval > TimeSpan.Zero)
+            _syncTimer = new Timer(async (object item) =>
             {
-                _syncTask = Task.Run(async () =>
+                try
                 {
-                    while (true)
-                    {
-                        try
-                        {
-                            await InsertAsync();
-                        }
-                        catch
-                        {
-                        }
-                        finally
-                        {
-                            Thread.Sleep(syncInterval);
-                        }
-                    }
-                });
-            }
+                    await InsertAsync();
+                }
+                catch
+                {
+                }
+            }, null, syncInterval, syncInterval);
         }
 
         /// <summary>
@@ -307,14 +320,19 @@ namespace ITsoft.Extensions.MySql
         {
             int result = -1;
 
-            string query = CreateQuery();
-            if (query != null)
+            if (!SyncPaused)
             {
-                //вставка
-                result = _adapter.Execute(query);
+                string query = CreateQuery();
+                if (query != null)
+                {
+                    //вставка
+                    result = _adapter.Execute(query);
 
-                AfterInsert?.Invoke(result);
+                    SyncDateTime = DateTime.Now;
+                    AfterInsert?.Invoke(result);
+                }
             }
+            
 
             return result;
         }
@@ -326,13 +344,17 @@ namespace ITsoft.Extensions.MySql
         {
             int result = -1;
 
-            string query = CreateQuery();
-            if (query != null)
+            if (!SyncPaused)
             {
-                //вставка
-                result = await _adapter.ExecuteAsync(query);
+                string query = CreateQuery();
+                if (query != null)
+                {
+                    //вставка
+                    result = await _adapter.ExecuteAsync(query);
 
-                AfterInsert?.Invoke(result);
+                    SyncDateTime = DateTime.Now;
+                    AfterInsert?.Invoke(result);
+                }
             }
 
             return result;
@@ -354,6 +376,18 @@ namespace ITsoft.Extensions.MySql
             }
 
             return query;
+        }
+
+        /// <summary>
+        /// Освобождает все ресурсы используемые данным экземпяром.
+        /// </summary>
+        public void Dispose()
+        {
+            _queryBuilder = null;
+            if (_syncTimer != null)
+            {
+                _syncTimer.Dispose();
+            }
         }
     }
 }

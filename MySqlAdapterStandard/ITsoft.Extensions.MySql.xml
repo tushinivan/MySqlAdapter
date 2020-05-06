@@ -76,6 +76,16 @@
             SQL запрос.
             </summary>
         </member>
+        <member name="P:ITsoft.Extensions.MySql.InsertBuffer.SyncPaused">
+            <summary>
+            Приостановить автоматическую синхронизацию.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.InsertBuffer.SyncDateTime">
+            <summary>
+            Дата и время последней синхронизации.
+            </summary>
+        </member>
         <member name="T:ITsoft.Extensions.MySql.InsertBuffer.InsertedArgs">
             <summary>
             
@@ -151,6 +161,11 @@
         <member name="M:ITsoft.Extensions.MySql.InsertBuffer.InsertAsync">
             <summary>
             Принудительно выполнить запрос и очистить очередь.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.Dispose">
+            <summary>
+            Освобождает все ресурсы используемые данным экземпяром.
             </summary>
         </member>
         <member name="T:ITsoft.Extensions.MySql.MySqlAdapter">
@@ -483,6 +498,16 @@
             SQL запрос.
             </summary>
         </member>
+        <member name="P:ITsoft.Extensions.MySql.QueryBuffer.SyncPaused">
+            <summary>
+            Приостановить автоматическую синхронизацию.
+            </summary>
+        </member>
+        <member name="P:ITsoft.Extensions.MySql.QueryBuffer.SyncDateTime">
+            <summary>
+            Дата и время последней синхронизации.
+            </summary>
+        </member>
         <member name="T:ITsoft.Extensions.MySql.QueryBuffer.ExecutedArgs">
             <summary>
             
@@ -555,6 +580,11 @@
         <member name="M:ITsoft.Extensions.MySql.QueryBuffer.ExecuteAsync">
             <summary>
             Принудительно выполнить запрос и очистить очередь.
+            </summary>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Dispose">
+            <summary>
+            Освобождает все ресурсы используемые данным экземпяром.
             </summary>
         </member>
     </members>

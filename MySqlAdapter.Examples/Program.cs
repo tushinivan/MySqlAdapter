@@ -29,6 +29,11 @@ namespace MySqlAdapterExaples
             buffer.Reject(1);
             buffer.Reject(2);
 
+            using (QueryBuffer buf = new QueryBuffer(adapter, new TimeSpan(0,1,0), 0))
+            {
+                
+            }
+
             var t = buffer.Query;
         }
 
