@@ -239,7 +239,7 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Принудительно выполнить запрос и очистить очередь.
         /// </summary>
-        public int Execute()
+        public int Execute(int? timeOut = null, bool? retryOnError = null)
         {
             int result = -1;
 
@@ -249,7 +249,7 @@ namespace ITsoft.Extensions.MySql
                 if (query != null)
                 {
                     //вставка
-                    result = _adapter.Execute(query);
+                    result = _adapter.Execute(query, timeOut, retryOnError);
 
                     SyncDateTime = DateTime.Now;
                     AfterExecute?.Invoke(result);
@@ -262,7 +262,7 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Принудительно выполнить запрос и очистить очередь.
         /// </summary>
-        public async Task<int> ExecuteAsync()
+        public async Task<int> ExecuteAsync(int? timeOut = null, bool? retryOnError = null)
         {
             int result = -1;
 
@@ -272,7 +272,7 @@ namespace ITsoft.Extensions.MySql
                 if (query != null)
                 {
                     //вставка
-                    result = await _adapter.ExecuteAsync(query);
+                    result = await _adapter.ExecuteAsync(query, timeOut, retryOnError);
 
                     SyncDateTime = DateTime.Now;
                     AfterExecute?.Invoke(result);
