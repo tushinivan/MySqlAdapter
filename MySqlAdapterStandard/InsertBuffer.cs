@@ -13,7 +13,7 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Количество запросов в очереди.
         /// </summary>
-        public int QueueCount { get => _counter; }
+        public int Count { get => _counter; }
 
         /// <summary>
         /// SQL запрос.
@@ -77,7 +77,7 @@ namespace ITsoft.Extensions.MySql
         private StringBuilder _paramBuilder = null;
 
         private int _counter = 0;
-        private int _packageSize = 0;
+        private int _batchSize = 0;
         private int _leftPartSize = 0;
 
         private Timer _syncTimer;
@@ -87,13 +87,13 @@ namespace ITsoft.Extensions.MySql
         /// 
         /// </summary>
         /// <param name="adapter"><see cref="MySqlAdapter"/> адаптер</param>
-        /// <param name="packageSize">Размер пакета.</param>
+        /// <param name="batchSize">Размер пакета.</param>
         /// <param name="table">Таблица для вставки/</param>
         /// <param name="insertIgnore">Вставка с игнорированием.</param>
         /// <param name="columns">Столбцы/</param>
-        public InsertBuffer(MySqlAdapter adapter, int packageSize, string table, bool insertIgnore, params string[] columns)
+        public InsertBuffer(MySqlAdapter adapter, int batchSize, string table, bool insertIgnore, params string[] columns)
         {
-            _packageSize = packageSize;
+            _batchSize = batchSize;
             _adapter = adapter;
 
             _queryBuilder = new StringBuilder($"INSERT {(!insertIgnore ? "INTO" : "IGNORE")} {table}(", 1000);
@@ -113,14 +113,14 @@ namespace ITsoft.Extensions.MySql
         /// 
         /// </summary>
         /// <param name="adapter"><see cref="MySqlAdapter"/> адаптер</param>
-        /// <param name="packageSize">Размер пакета.</param>
+        /// <param name="batchSize">Размер пакета.</param>
         /// <param name="table">Таблица для вставки/</param>
         /// <param name="insertIgnore">Вставка с игнорированием.</param>
         /// <param name="syncInterval">Период с которым выполняется вставка.</param>
         /// <param name="columns">Столбцы/</param>
-        public InsertBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, string table, bool insertIgnore, params string[] columns)
+        public InsertBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int batchSize, string table, bool insertIgnore, params string[] columns)
         {
-            _packageSize = packageSize;
+            _batchSize = batchSize;
             _adapter = adapter;
 
             _queryBuilder = new StringBuilder($"INSERT {(!insertIgnore ? "INTO" : "IGNORE")} {table}(", 1000);
@@ -159,7 +159,7 @@ namespace ITsoft.Extensions.MySql
                 _queryBuilder.Append("(" + values + "),");
 
                 int result = 0;
-                if (_packageSize > 0 && _counter >= _packageSize)
+                if (_batchSize > 0 && _counter >= _batchSize)
                 {
                     result = Insert();
                 }
@@ -188,7 +188,7 @@ namespace ITsoft.Extensions.MySql
 
                 Interlocked.Increment(ref _counter);
                 int result = 0;
-                if (_packageSize > 0 && _counter >= _packageSize)
+                if (_batchSize > 0 && _counter >= _batchSize)
                 {
                     result = Insert();
                 }
@@ -234,7 +234,7 @@ namespace ITsoft.Extensions.MySql
 
                 Interlocked.Increment(ref _counter);
                 int result = -1;
-                if (_packageSize > 0 && _counter >= _packageSize)
+                if (_batchSize > 0 && _counter >= _batchSize)
                 {
                     result = Insert();
                 }
@@ -300,7 +300,7 @@ namespace ITsoft.Extensions.MySql
 
                         Interlocked.Increment(ref _counter);
                         int result = -1;
-                        if (_packageSize > 0 && _counter >= _packageSize)
+                        if (_batchSize > 0 && _counter >= _batchSize)
                         {
                             result = Insert();
                         }

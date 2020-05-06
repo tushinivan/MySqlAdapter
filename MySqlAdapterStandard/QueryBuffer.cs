@@ -15,7 +15,7 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Количество запросов в очереди.
         /// </summary>
-        public int QueueCount { get => _counter; }
+        public int Count { get => _counter; }
 
         /// <summary>
         /// SQL запрос.
@@ -80,7 +80,7 @@ namespace ITsoft.Extensions.MySql
         private readonly MySqlAdapter _adapter;
         private StringBuilder _queryBuilder = new StringBuilder();
         private int _counter = 0;
-        private int _packageSize = 0;
+        private int _batchSize = 0;
         private bool _useTransaction = false;
         private List<int> _operationOffsets = new List<int>();
 
@@ -91,11 +91,11 @@ namespace ITsoft.Extensions.MySql
         /// 
         /// </summary>
         /// <param name="adapter">MySqlAdapter адаптер</param>
-        /// <param name="packageSize">Размер пакета</param>
+        /// <param name="batchSize">Размер пакета</param>
         /// <param name="useTransaction">Отсправить запрос как одну транзакцию.</param>
-        public QueryBuffer(MySqlAdapter adapter, int packageSize, bool useTransaction = false)
+        public QueryBuffer(MySqlAdapter adapter, int batchSize, bool useTransaction = false)
         {
-            this._packageSize = packageSize;
+            this._batchSize = batchSize;
             this._adapter = adapter;
             this._useTransaction = useTransaction;
 
@@ -110,11 +110,11 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         /// <param name="adapter">MySqlAdapter адаптер</param>
         /// <param name="syncInterval">Интервал по истечению которого произойдет выполнение буферизированных запросов.</param>
-        /// <param name="packageSize">Размер пакета</param>
+        /// <param name="batchSize">Размер пакета</param>
         /// <param name="useTransaction">Использовать транзакции для вставки буферизированных запросов.</param>
-        public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int packageSize, bool useTransaction = false)
+        public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int batchSize, bool useTransaction = false)
         {
-            _packageSize = packageSize;
+            _batchSize = batchSize;
             _adapter = adapter;
             _useTransaction = useTransaction;
 
@@ -174,7 +174,7 @@ namespace ITsoft.Extensions.MySql
                     _queryBuilder.AppendLine();
 
                     int result = 0;
-                    if (_packageSize > 0 && _counter >= _packageSize)
+                    if (_batchSize > 0 && _counter >= _batchSize)
                     {
                         result = Execute();
                     }

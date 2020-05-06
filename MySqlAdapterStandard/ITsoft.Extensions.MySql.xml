@@ -102,7 +102,7 @@
             
             </summary>
             <param name="adapter"><see cref="T:ITsoft.Extensions.MySql.MySqlAdapter"/> адаптер</param>
-            <param name="packageSize">Размер пакета.</param>
+            <param name="batchSize">Размер пакета.</param>
             <param name="table">Таблица для вставки/</param>
             <param name="insertIgnore">Вставка с игнорированием.</param>
             <param name="columns">Столбцы/</param>
@@ -112,7 +112,7 @@
             
             </summary>
             <param name="adapter"><see cref="T:ITsoft.Extensions.MySql.MySqlAdapter"/> адаптер</param>
-            <param name="packageSize">Размер пакета.</param>
+            <param name="batchSize">Размер пакета.</param>
             <param name="table">Таблица для вставки/</param>
             <param name="insertIgnore">Вставка с игнорированием.</param>
             <param name="syncInterval">Период с которым выполняется вставка.</param>
@@ -524,7 +524,7 @@
             
             </summary>
             <param name="adapter">MySqlAdapter адаптер</param>
-            <param name="packageSize">Размер пакета</param>
+            <param name="batchSize">Размер пакета</param>
             <param name="useTransaction">Отсправить запрос как одну транзакцию.</param>
         </member>
         <member name="M:ITsoft.Extensions.MySql.QueryBuffer.#ctor(ITsoft.Extensions.MySql.MySqlAdapter,System.TimeSpan,System.Int32,System.Boolean)">
@@ -533,7 +533,7 @@
             </summary>
             <param name="adapter">MySqlAdapter адаптер</param>
             <param name="syncInterval">Интервал по истечению которого произойдет выполнение буферизированных запросов.</param>
-            <param name="packageSize">Размер пакета</param>
+            <param name="batchSize">Размер пакета</param>
             <param name="useTransaction">Использовать транзакции для вставки буферизированных запросов.</param>
         </member>
         <member name="M:ITsoft.Extensions.MySql.QueryBuffer.StartTransaction">
