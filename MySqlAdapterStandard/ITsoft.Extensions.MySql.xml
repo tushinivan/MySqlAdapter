@@ -63,10 +63,10 @@
         </member>
         <member name="T:ITsoft.Extensions.MySql.InsertBuffer">
             <summary>
-            Буфер пакетной вставки.
+            Буфер пакетной вставки SQL запросов.
             </summary>
         </member>
-        <member name="P:ITsoft.Extensions.MySql.InsertBuffer.QueueCount">
+        <member name="P:ITsoft.Extensions.MySql.InsertBuffer.Count">
             <summary>
             Количество запросов в очереди.
             </summary>
@@ -153,12 +153,12 @@
             </summary>
             <param name="apply">Применить результат.</param>
         </member>
-        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.Insert">
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.Insert(System.Nullable{System.Int32},System.Nullable{System.Boolean})">
             <summary>
             Принудительно выполнить запрос и очистить очередь.
             </summary>
         </member>
-        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.InsertAsync">
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.InsertAsync(System.Nullable{System.Int32},System.Nullable{System.Boolean})">
             <summary>
             Принудительно выполнить запрос и очистить очередь.
             </summary>
@@ -485,10 +485,10 @@
         </member>
         <member name="T:ITsoft.Extensions.MySql.QueryBuffer">
             <summary>
-            Буфер пакетной вставки запросов.
+            Буфер пакетного выполнения SQL запросов.
             </summary>
         </member>
-        <member name="P:ITsoft.Extensions.MySql.QueryBuffer.QueueCount">
+        <member name="P:ITsoft.Extensions.MySql.QueryBuffer.Count">
             <summary>
             Количество запросов в очереди.
             </summary>
@@ -572,12 +572,12 @@
             <param name="regex"></param>
             <param name="evalutor"></param>
         </member>
-        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Execute">
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Execute(System.Nullable{System.Int32},System.Nullable{System.Boolean})">
             <summary>
             Принудительно выполнить запрос и очистить очередь.
             </summary>
         </member>
-        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.ExecuteAsync">
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.ExecuteAsync(System.Nullable{System.Int32},System.Nullable{System.Boolean})">
             <summary>
             Принудительно выполнить запрос и очистить очередь.
             </summary>
