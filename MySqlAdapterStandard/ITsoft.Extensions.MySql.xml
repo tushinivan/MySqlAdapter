@@ -173,6 +173,11 @@
             Клиент доступа к серверу MySQL.
             </summary>
         </member>
+        <member name="P:ITsoft.Extensions.MySql.MySqlAdapter.ConnectionString">
+            <summary>
+            Строка подключения к MySQL серверу.
+            </summary>
+        </member>
         <member name="P:ITsoft.Extensions.MySql.MySqlAdapter.RetryOnError">
             <summary>
             Выполнять запрос выдавший ошибку, через интервал LoopTimeOut.
