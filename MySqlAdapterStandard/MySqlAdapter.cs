@@ -15,6 +15,11 @@ namespace ITsoft.Extensions.MySql
     public partial class MySqlAdapter
     {
         /// <summary>
+        /// Строка подключения к MySQL серверу.
+        /// </summary>
+        public string ConnectionString { get { return _connectionString; } }
+
+        /// <summary>
         /// Выполнять запрос выдавший ошибку, через интервал LoopTimeOut.
         /// </summary>
         public bool RetryOnError { get; set; } = true;
