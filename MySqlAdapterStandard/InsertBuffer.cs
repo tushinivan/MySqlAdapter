@@ -46,9 +46,9 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Дата и время последней синхронизации.
         /// </summary>
-        public DateTime SyncDateTime 
+        public DateTime SyncDateTime
         {
-            get 
+            get
             {
                 if (_syncTimer != null)
                 {
@@ -332,7 +332,7 @@ namespace ITsoft.Extensions.MySql
                     AfterInsert?.Invoke(result);
                 }
             }
-            
+
 
             return result;
         }
@@ -364,9 +364,9 @@ namespace ITsoft.Extensions.MySql
         {
             string query = null;
 
-            if (_counter > 0)
+            lock (_queryBuilder)
             {
-                lock (_queryBuilder)
+                if (_counter > 0)
                 {
                     _queryBuilder.Remove(_queryBuilder.Length - 1, 1);
                     query = _queryBuilder.ToString();

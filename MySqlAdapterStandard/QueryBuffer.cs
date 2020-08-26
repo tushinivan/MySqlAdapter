@@ -278,7 +278,7 @@ namespace ITsoft.Extensions.MySql
                     AfterExecute?.Invoke(result);
                 }
             }
-            
+
 
             return result;
         }
@@ -287,9 +287,9 @@ namespace ITsoft.Extensions.MySql
         {
             string query = null;
 
-            if (_counter > 0)
+            lock (_queryBuilder)
             {
-                lock (_queryBuilder)
+                if (_counter > 0)
                 {
                     if (_useTransaction)
                     {
