@@ -66,6 +66,11 @@
             Буфер пакетной вставки SQL запросов.
             </summary>
         </member>
+        <member name="P:ITsoft.Extensions.MySql.InsertBuffer.DefaultTimeOut">
+            <summary>
+            Время ожидания выполнения запроса. По умолчанию берется таймаут из адаптера.
+            </summary>
+        </member>
         <member name="P:ITsoft.Extensions.MySql.InsertBuffer.Count">
             <summary>
             Количество запросов в очереди.
@@ -152,6 +157,11 @@
             Выводит буфер из режима одиночной вставки значений и добавляет значение в очередь.
             </summary>
             <param name="apply">Применить результат.</param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.InsertBuffer.Insert">
+            <summary>
+            Принудительно выполнить запрос и очистить очередь.
+            </summary>
         </member>
         <member name="M:ITsoft.Extensions.MySql.InsertBuffer.Insert(System.Nullable{System.Int32},System.Nullable{System.Boolean})">
             <summary>
@@ -493,6 +503,11 @@
             Буфер пакетного выполнения SQL запросов.
             </summary>
         </member>
+        <member name="P:ITsoft.Extensions.MySql.QueryBuffer.DefaultTimeOut">
+            <summary>
+            Время ожидания выполнения запроса. По умолчанию берется таймаут из адаптера.
+            </summary>
+        </member>
         <member name="P:ITsoft.Extensions.MySql.QueryBuffer.Count">
             <summary>
             Количество запросов в очереди.
@@ -576,6 +591,11 @@
             </summary>
             <param name="regex"></param>
             <param name="evalutor"></param>
+        </member>
+        <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Execute">
+            <summary>
+            Принудительно выполнить запрос и очистить очередь.
+            </summary>
         </member>
         <member name="M:ITsoft.Extensions.MySql.QueryBuffer.Execute(System.Nullable{System.Int32},System.Nullable{System.Boolean})">
             <summary>
