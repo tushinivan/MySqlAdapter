@@ -13,6 +13,11 @@ namespace ITsoft.Extensions.MySql
     public sealed class QueryBuffer : IDisposable
     {
         /// <summary>
+        /// Время ожидания выполнения запроса. По умолчанию берется таймаут из адаптера.
+        /// </summary>
+        public int DefaultTimeOut { get; set; }
+
+        /// <summary>
         /// Количество запросов в очереди.
         /// </summary>
         public int Count { get => _counter; }
@@ -95,9 +100,15 @@ namespace ITsoft.Extensions.MySql
         /// <param name="useTransaction">Отсправить запрос как одну транзакцию.</param>
         public QueryBuffer(MySqlAdapter adapter, int batchSize, bool useTransaction = false)
         {
-            this._batchSize = batchSize;
-            this._adapter = adapter;
-            this._useTransaction = useTransaction;
+            if (adapter == null)
+            {
+                throw new NullReferenceException("Значение параметра adapter не должно быть null.");
+            }
+
+            _batchSize = batchSize;
+            _adapter = adapter;
+            _useTransaction = useTransaction;
+            DefaultTimeOut = adapter.DefaultTimeOut;
 
             if (useTransaction)
             {
@@ -114,9 +125,15 @@ namespace ITsoft.Extensions.MySql
         /// <param name="useTransaction">Использовать транзакции для вставки буферизированных запросов.</param>
         public QueryBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int batchSize, bool useTransaction = false)
         {
+            if (adapter == null)
+            {
+                throw new NullReferenceException("Значение параметра adapter не должно быть null.");
+            }
+
             _batchSize = batchSize;
             _adapter = adapter;
             _useTransaction = useTransaction;
+            DefaultTimeOut = adapter.DefaultTimeOut;
 
             if (useTransaction)
             {
@@ -241,7 +258,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         public int Execute()
         {
-            return Execute(null, null);
+            return Execute(DefaultTimeOut, null);
         }
 
         /// <summary>

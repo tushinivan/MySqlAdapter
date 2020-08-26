@@ -11,6 +11,11 @@ namespace ITsoft.Extensions.MySql
     public sealed class InsertBuffer : IDisposable
     {
         /// <summary>
+        /// Время ожидания выполнения запроса. По умолчанию берется таймаут из адаптера.
+        /// </summary>
+        public int DefaultTimeOut { get; set; } = 0;
+
+        /// <summary>
         /// Количество запросов в очереди.
         /// </summary>
         public int Count { get => _counter; }
@@ -93,6 +98,11 @@ namespace ITsoft.Extensions.MySql
         /// <param name="columns">Столбцы/</param>
         public InsertBuffer(MySqlAdapter adapter, int batchSize, string table, bool insertIgnore, params string[] columns)
         {
+            if (adapter == null)
+            {
+                throw new NullReferenceException("Значение параметра adapter не должно быть null.");
+            }
+
             _batchSize = batchSize;
             _adapter = adapter;
 
@@ -107,6 +117,7 @@ namespace ITsoft.Extensions.MySql
             _queryBuilder.Append(") VALUES ");
 
             _leftPartSize = _queryBuilder.Length;
+            DefaultTimeOut = adapter.DefaultTimeOut;
         }
 
         /// <summary>
@@ -120,6 +131,11 @@ namespace ITsoft.Extensions.MySql
         /// <param name="columns">Столбцы/</param>
         public InsertBuffer(MySqlAdapter adapter, TimeSpan syncInterval, int batchSize, string table, bool insertIgnore, params string[] columns)
         {
+            if (adapter == null)
+            {
+                throw new NullReferenceException("Значение параметра adapter не должно быть null.");
+            }
+
             _batchSize = batchSize;
             _adapter = adapter;
 
@@ -145,6 +161,7 @@ namespace ITsoft.Extensions.MySql
                 {
                 }
             }, null, syncInterval, syncInterval);
+            DefaultTimeOut = adapter.DefaultTimeOut;
         }
 
         /// <summary>
@@ -318,7 +335,7 @@ namespace ITsoft.Extensions.MySql
         /// </summary>
         public int Insert()
         {
-            return Insert(null, null);
+            return Insert(DefaultTimeOut, null);
         }
 
         /// <summary>
