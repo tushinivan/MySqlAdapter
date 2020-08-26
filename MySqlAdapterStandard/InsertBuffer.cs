@@ -316,7 +316,15 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Принудительно выполнить запрос и очистить очередь.
         /// </summary>
-        public int Insert(int? timeOut = null, bool? retryOnError = null)
+        public int Insert()
+        {
+            return Insert(null, null);
+        }
+
+        /// <summary>
+        /// Принудительно выполнить запрос и очистить очередь.
+        /// </summary>
+        public int Insert(int? timeOut, bool? retryOnError )
         {
             int result = -1;
 

@@ -239,7 +239,15 @@ namespace ITsoft.Extensions.MySql
         /// <summary>
         /// Принудительно выполнить запрос и очистить очередь.
         /// </summary>
-        public int Execute(int? timeOut = null, bool? retryOnError = null)
+        public int Execute()
+        {
+            return Execute(null, null);
+        }
+
+        /// <summary>
+        /// Принудительно выполнить запрос и очистить очередь.
+        /// </summary>
+        public int Execute(int? timeOut, bool? retryOnError)
         {
             int result = -1;
 
